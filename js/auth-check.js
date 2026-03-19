@@ -19,7 +19,7 @@ function checkAuthentication() {
 
     // 토큰이 없으면 로그인 페이지로 이동
     if (!token) {
-        window.location.href = '/pages/login';
+        window.location.href = '/pages/login.html';
         return;
     }
 
