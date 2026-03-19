@@ -38,7 +38,7 @@ async function loadConfig() {
     window.APP_RUNTIME.loading = true;
 
     try {
-        const response = await fetch('http://localhost:8080/api/public/config');
+        const response = await fetch('/api/public/config');
         if (!response.ok) {
             throw new Error(`설정 로드 실패: ${response.status}`);
         }
