@@ -64,6 +64,8 @@ async function makeApiRequest(endpointKey, options = {}) {
             fetchOptions.body = JSON.stringify(body);
         }
 
+        console.log('url', url)
+        console.log('fetchOptions', fetchOptions)
         const response = await fetch(url, fetchOptions);
 
         // 401 Unauthorized 응답 시 로그인 페이지로 이동 (쿠키 삭제)
