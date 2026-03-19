@@ -21,6 +21,7 @@ async function makeApiRequest(endpointKey, options = {}) {
     try {
         // 설정에서 엔드포인트 계약 가져오기
         const config = await getConfig();
+        console.log(config)
         const endpointContract = config.api.endpoints[endpointKey];
 
         if (!endpointContract) {
