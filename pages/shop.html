@@ -321,7 +321,7 @@
                 if (result.orderId) {
                     showNotification('주문 생성 완료!', 'success');
                     setTimeout(() => {
-                        window.location.href = `/pages/orders?orderId=${result.orderId}`;
+                        window.location.href = `/pages/orders.html?orderId=${result.orderId}`;
                     }, 1000);
                 }
             } catch (error) {

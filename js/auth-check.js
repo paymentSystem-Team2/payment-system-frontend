@@ -61,7 +61,7 @@ function handleLogout() {
     if (typeof removeToken === 'function') removeToken();
 
     // 로그인 페이지로 이동
-    window.location.href = '/pages/login';
+    window.location.href = '/pages/login.html';
 }
 
 // 페이지 로드 시 인증 체크

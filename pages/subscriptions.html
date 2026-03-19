@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>구독 관리 - Commerce Demo</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
-    <script th:src="@{/js/cookie-util.js}"></script>
-    <script th:src="@{/js/app-config.js}"></script>
-    <script th:src="@{/js/api-handler.js}"></script>
-    <script th:src="@{/js/api-validator.js}"></script>
-    <script th:src="@{/js/theme.js}"></script>
-    <script th:src="@{/js/portone-sdk.js}"></script>
-    <script th:src="@{/js/auth-check.js}"></script>
+    <script src="/js/cookie-util.js"></script>
+    <script src="/js/app-config.js"></script>
+    <script src="/js/api-handler.js"></script>
+    <script src="/js/api-validator.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/portone-sdk.js"></script>
+    <script src="/js/auth-check.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -21,12 +21,12 @@
             <a href="/" class="navbar-brand">🏪 CommerceHub</a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
-                <li><a href="/pages/shop" class="nav-link">상점</a></li>
-                <li><a href="/pages/orders" class="nav-link">주문</a></li>
-                <li><a href="/pages/points" class="nav-link">포인트</a></li>
-                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
-                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
-                <li><a href="/pages/subscriptions" class="nav-link active">구독 관리</a></li>
+                <li><a href="/pages/shop.html" class="nav-link active">상점</a></li>
+                <li><a href="/pages/orders.html" class="nav-link">주문</a></li>
+                <li><a href="/pages/points.html" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans.html" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe.html" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions.html" class="nav-link">구독 관리</a></li>
             </ul>
             <div class="navbar-actions">
                 <div class="config-badge-container"></div>
@@ -114,7 +114,7 @@
                 <div class="card-header">📋 사용 안내</div>
                 <div class="card-body">
                     <ol style="margin-left: 1.5rem; line-height: 2;">
-                        <li><a href="/pages/subscribe" style="color: var(--primary);">/subscribe</a> 페이지에서 구독 생성 </li>
+                        <li><a href="/pages/subscribe.html" style="color: var(--primary);">/subscribe</a> 페이지에서 구독 생성 </li>
                         <li>받은 구독 ID 입력</li>
                         <li>"구독 정보 불러오기"를 클릭하여 상세 정보 가져오기</li>
                         <li>"현재 주기 청구 실행"을 사용하여 정기 결제 테스트</li>
