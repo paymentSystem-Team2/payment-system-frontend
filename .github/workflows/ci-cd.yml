@@ -1,0 +1,103 @@
+name: frontend-cicd
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-northeast-2
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+      DEPLOY_PACKAGE: payment-system-frontend-${{ github.sha }}.zip
+      S3_KEY: frontend/payment-system-frontend-${{ github.sha }}.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+
+      - name: Create deploy package
+        run: |
+          zip -r ${{ env.DEPLOY_PACKAGE }} \
+            index.html \
+            favicon.ico \
+            favicon.svg \
+            css \
+            js \
+            pages \
+            nginx
+
+      - name: Upload deploy package to S3
+        run: |
+          aws s3 cp ${{ env.DEPLOY_PACKAGE }} s3://${{ env.S3_BUCKET }}/${{ env.S3_KEY }}
+
+      - name: Deploy on EC2 via SSM
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy frontend static files" \
+            --parameters 'commands=[
+              "set -e",
+              "sudo mkdir -p /var/www/payment-system-frontend",
+              "rm -rf /tmp/payment-system-frontend-deploy",
+              "mkdir -p /tmp/payment-system-frontend-deploy",
+              "aws s3 cp s3://${{ env.S3_BUCKET }}/${{ env.S3_KEY }} /tmp/payment-system-frontend-deploy/app.zip",
+              "unzip -o /tmp/payment-system-frontend-deploy/app.zip -d /tmp/payment-system-frontend-deploy/unpacked",
+              "sudo rm -rf /var/www/payment-system-frontend/*",
+              "sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/index.html /var/www/payment-system-frontend/",
+              "if [ -f /tmp/payment-system-frontend-deploy/unpacked/favicon.ico ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/favicon.ico /var/www/payment-system-frontend/; fi",
+              "if [ -f /tmp/payment-system-frontend-deploy/unpacked/favicon.svg ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/favicon.svg /var/www/payment-system-frontend/; fi",
+              "if [ -d /tmp/payment-system-frontend-deploy/unpacked/css ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/css /var/www/payment-system-frontend/; fi",
+              "if [ -d /tmp/payment-system-frontend-deploy/unpacked/js ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/js /var/www/payment-system-frontend/; fi",
+              "if [ -d /tmp/payment-system-frontend-deploy/unpacked/pages ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/pages /var/www/payment-system-frontend/; fi",
+              "if [ -f /tmp/payment-system-frontend-deploy/unpacked/nginx/default.conf ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/nginx/default.conf /etc/nginx/conf.d/default.conf; fi",
+              "sudo nginx -t",
+              "sudo systemctl reload nginx"
+            ]' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+
+      - name: Wait for SSM command result
+        run: |
+          for i in {1..30}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+              --query "Status" \
+              --output text 2>/dev/null || true)
+
+            echo "SSM status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              exit 0
+            fi
+
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+                --output json
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "SSM command did not finish in time."
+          exit 1
