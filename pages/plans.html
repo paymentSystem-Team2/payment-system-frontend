@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>플랜 - Commerce Demo</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script src="/js/cookie-util.js"></script>
+    <script src="/js/app-config.js"></script>
+    <script src="/js/api-handler.js"></script>
+    <script src="/js/api-validator.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/portone-sdk.js"></script>
+    <script src="/js/auth-check.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop.html" class="nav-link active">상점</a></li>
+                <li><a href="/pages/orders.html" class="nav-link">주문</a></li>
+                <li><a href="/pages/points.html" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans.html" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe.html" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions.html" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem; text-align: center;">⭐ 구독 플랜</h1>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 3rem;">
+                필요에 맞는 완벽한 플랜을 선택하세요
+            </p>
+
+            <!-- 동적으로 로드되는 플랜 카드 -->
+            <div id="plans-container" class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    플랜 로딩 중...
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                <h3 style="margin-bottom: 1rem;">💡 플랜 혜택</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
+                        <strong>무료 배송</strong>
+                        <p style="color: var(--text-secondary); margin-top: 0.25rem;">모든 플랜에 무료 배송 포함</p>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
+                        <strong>캐시백</strong>
+                        <p style="color: var(--text-secondary); margin-top: 0.25rem;">구매 시마다 포인트 적립</p>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎟️</div>
+                        <strong>독점 쿠폰</strong>
+                        <p style="color: var(--text-secondary); margin-top: 0.25rem;">매월 할인 쿠폰 제공</p>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</div>
+                        <strong>우선 구매</strong>
+                        <p style="color: var(--text-secondary); margin-top: 0.25rem;">신제품 먼저 구매 가능</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 플랜별 이모지 매핑
+        const planEmojis = {
+            'BASIC': '🥉',
+            'PRO': '🥈',
+            'MAX': '🥇'
+        };
+
+        // 플랜별 기본 특징 (백엔드에서 제공하지 않을 경우 사용)
+        const defaultFeatures = {
+            'BASIC': ['무료 배송', '기본 고객센터', '월 10회 할인쿠폰', '구매 시 1% 적립'],
+            'PRO': ['무료 배송', '우선 고객센터', '월 30회 할인쿠폰', '구매 시 3% 적립', '신제품 우선 구매'],
+            'MAX': ['무료 배송', '프리미엄 고객센터', '무제한 할인쿠폰', '구매 시 5% 적립', '신제품 우선 구매', 'VIP 이벤트 초대', '전용 상담사 배정']
+        };
+
+        // 주기별 표시 텍스트
+        const billingCycleText = {
+            'MONTHLY': '월',
+            'QUARTERLY': '분기',
+            'ANNUAL': '년'
+        };
+
+        // 페이지 로드 시 플랜 로드
+        document.addEventListener('DOMContentLoaded', loadPlans);
+
+        async function loadPlans() {
+            try {
+                const plans = await makeApiRequest('list-plans', {
+                });
+
+                if (!validateApiResponse('list-plans', plans)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+
+                renderPlans(plans);
+            } catch (error) {
+                console.error('Failed to load plans:', error);
+                showApiNotImplemented();
+            }
+        }
+
+        function renderPlans(plans) {
+            const container = document.getElementById('plans-container');
+
+            if (!plans || plans.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                        등록된 플랜이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            // 중간 플랜을 "인기" 플랜으로 표시 (3개일 경우 2번째)
+            const popularIndex = Math.floor(plans.length / 2);
+
+            container.innerHTML = plans.map((plan, index) => {
+                const isPopular = index === popularIndex && plans.length >= 3;
+                const emoji = planEmojis[plan.name?.toUpperCase()] || planEmojis[plan.planId] || '📦';
+                const features = defaultFeatures[plan.name?.toUpperCase()] || ['플랜 혜택 제공'];
+                const cycleText = billingCycleText[plan.billingCycle] || '월';
+                const buttonClass = isPopular ? 'btn-primary' : 'btn-outline';
+                const cardStyle = isPopular ? 'border-color: var(--primary); border-width: 3px; transform: scale(1.05);' : '';
+
+                return `
+                    <div class="plan-card" style="${cardStyle}">
+                        ${isPopular ? `
+                            <div style="background: var(--primary); color: white; padding: 0.5rem; border-radius: var(--radius-sm); text-align: center; margin-bottom: 1rem; font-weight: 600;">
+                                🔥 가장 인기 있는
+                            </div>
+                        ` : ''}
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">${emoji}</div>
+                            <div class="card-header">${plan.name}</div>
+                            <div class="price">₩${plan.amount.toLocaleString()}<span style="font-size: 1rem; color: var(--text-secondary);">/${cycleText}</span></div>
+                        </div>
+                        <ul class="features-list" style="margin: 2rem 0;">
+                            ${features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                        </ul>
+                        <button class="btn ${buttonClass}" onclick="goToSubscribe('${plan.planId}')" style="width: 100%;">
+                            ${plan.name} 선택
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showApiNotImplemented() {
+            const container = document.getElementById('plans-container');
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1;">
+                    <div class="alert alert-warning">
+                        <h3>⚠️ API 미구현</h3>
+                        <p><strong>GET /api/plans</strong> 엔드포인트를 구현해주세요.</p>
+                        <p>구독 플랜 목록을 조회하는 API가 필요합니다.</p>
+                        <p style="margin-top: 1rem; color: var(--text-secondary);">
+                            API 구현 후 이 페이지가 자동으로 플랜을 표시합니다.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function goToSubscribe(planId) {
+            window.location.href = `/pages/subscribe?planId=${planId}`;
+        }
+    </script>
+</body>
+</html>
