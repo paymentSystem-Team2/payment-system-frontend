@@ -41,7 +41,8 @@ async function openPortOnePayment(paymentData) {
         const createPaymentResult = await makeApiRequest('create-payment', {
             body: {
                 orderId: paymentData.orderId,
-                totalAmount: paymentData.totalAmount
+                totalAmount: paymentData.totalAmount,
+                pointsToUse : 0
             }
         });
 
