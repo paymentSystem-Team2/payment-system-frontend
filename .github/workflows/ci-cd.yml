@@ -38,6 +38,7 @@ jobs:
             css \
             js \
             pages \
+            images \
             nginx
 
       - name: Upload deploy package to S3
@@ -62,6 +63,7 @@ jobs:
               "if [ -f /tmp/payment-system-frontend-deploy/unpacked/favicon.ico ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/favicon.ico /var/www/payment-system-frontend/; fi",
               "if [ -f /tmp/payment-system-frontend-deploy/unpacked/favicon.svg ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/favicon.svg /var/www/payment-system-frontend/; fi",
               "if [ -d /tmp/payment-system-frontend-deploy/unpacked/css ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/css /var/www/payment-system-frontend/; fi",
+              "if [ -d /tmp/payment-system-frontend-deploy/unpacked/images ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/images /var/www/payment-system-frontend/; fi",
               "if [ -d /tmp/payment-system-frontend-deploy/unpacked/js ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/js /var/www/payment-system-frontend/; fi",
               "if [ -d /tmp/payment-system-frontend-deploy/unpacked/pages ]; then sudo cp -r /tmp/payment-system-frontend-deploy/unpacked/pages /var/www/payment-system-frontend/; fi",
               "if [ -f /tmp/payment-system-frontend-deploy/unpacked/nginx/default.conf ]; then sudo cp /tmp/payment-system-frontend-deploy/unpacked/nginx/default.conf /etc/nginx/conf.d/default.conf; fi",
