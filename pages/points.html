@@ -82,6 +82,7 @@
                     </button>
                 </div>
                 <div class="card-body">
+                    <p id="user-point-balance"></p>
                     <div id="orders-container"></div>
                 </div>
             </div>
@@ -209,6 +210,11 @@
                 if (!validateApiResponse('get-current-user', currentUser)) {
                     throw new Error('API 응답 형식이 올바르지 않습니다.');
                 }
+
+                const pointElement = document.getElementById('user-point-balance');
+                console.log('currentUser' , currentUser);
+                pointElement.textContent =
+                    `현재 사용 가능 포인트 : ${currentUser.pointBalance.toLocaleString()} 포인트`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 currentUser = null;
