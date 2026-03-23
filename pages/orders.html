@@ -303,17 +303,46 @@
                         </span>
                     </td>
                     <td style="padding: 0.75rem; text-align: center;">
-                        ${order.status === 'PENDING' ?
-                            `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="payOrder('${order.orderId}', ${finalAmount})">
-                                💳 결제하기
-                            </button>` :
-                            `<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>`
-                        }
+                        ${getActionButton(order, finalAmount)}
                     </td>
                 `;
 
                 tbody.appendChild(tr);
             });
+        }
+
+        function getActionButton(order, finalAmount) {
+            if (order.status === 'PENDING') {
+                return `
+                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="payOrder('${order.orderId}', ${finalAmount})">
+                    💳 결제하기
+                </button>
+            `;
+            }
+
+            if (order.status === 'DELIVERED') {
+                return `
+            <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="purchaseConfirmed('${order.orderId}')">
+                ✅ 구매 확정
+            </button>
+        `;
+            }
+
+            return `<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>`;
+        }
+
+        async function purchaseConfirmed(orderId){
+            try {
+                await makeApiRequest('purchase-confirm', {
+                    pathParams: orderId
+                });
+
+                showNotification('포인트 지급 성공', 'success');
+                await loadOrders();
+            } catch (error) {
+                showNotification('포인트 지급 실패!', 'success');
+                console.error('Failed to confirm payment:', error);
+            }
         }
 
         // 주문 결제하기
@@ -406,7 +435,8 @@
                 'PAID': 'background: #D1FAE5; color: #065F46;',
                 'CANCELLED': 'background: #FEE2E2; color: #991B1B;',
                 'SHIPPED': 'background: #DBEAFE; color: #1E40AF;',
-                'DELIVERED': 'background: #E0E7FF; color: #3730A3;'
+                'DELIVERED': 'background: #E0E7FF; color: #3730A3;',
+                'PURCHASE_CONFIRMED': 'background: #E0E7FF; color: #3730A3;'
             };
             return styles[status] || 'background: #F3F4F6; color: #374151;';
         }
@@ -418,7 +448,8 @@
                 'PAID': '결제 완료',
                 'CANCELLED': '취소됨',
                 'SHIPPED': '배송중',
-                'DELIVERED': '배송 완료'
+                'DELIVERED': '배송 완료',
+                'PURCHASE_CONFIRMED': '구매 확정(포인트 지급 완료)'
             };
             return texts[status] || status;
         }
