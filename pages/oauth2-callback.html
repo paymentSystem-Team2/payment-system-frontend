@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>로그인..</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script src="/js/cookie-util.js"></script>
+    <script src="/js/app-config.js"></script>
+    <script src="/js/api-handler.js"></script>
+    <script src="/js/api-validator.js"></script>
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+<div class="main-container">
+    <p>로그인 중..</p>
+</div>
+
+<script>
+    function getTokenFromUrl() {
+        // 1. query string 방식 (?access_token=xxx)
+        const params = new URLSearchParams(window.location.search);
+        let accessToken = params.get("access_token");
+        let refreshToken = params.get("refresh_token");
+        return { accessToken, refreshToken };
+    }
+
+    function saveTokenToCookie(accessToken, refreshToken) {
+        saveToken(accessToken);
+        saveRefreshToken(refreshToken);
+    }
+
+    function init() {
+        const { accessToken, refreshToken } = getTokenFromUrl();
+
+        if (!accessToken) {
+            document.querySelector("p").innerText = "토큰이 없습니다";
+            return;
+        }
+
+        saveTokenToCookie(accessToken, refreshToken);
+
+        console.log("토큰 저장 완료");
+
+        window.location.href = "/";
+    }
+
+    init();
+</script>
+</body>
+</html>

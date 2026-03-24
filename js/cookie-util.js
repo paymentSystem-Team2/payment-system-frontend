@@ -55,7 +55,7 @@ function saveToken(token) {
  * @param {string} token - JWT 토큰
  */
 function saveRefreshToken(token) {
-    setCookie('jwt_token', token, 1);  // 1일 유효
+    setCookie('refresh_token', token, 14);
 }
 
 /**
