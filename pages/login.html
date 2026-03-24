@@ -521,7 +521,7 @@
                         const token = authHeader.substring(7);  // "Bearer " 제거
                         // JWT 토큰을 쿠키에 저장
                         saveToken(token);
-                        saveRefreshToken(refresh_token);
+                        saveRefreshToken(refresh_token.substring(7));
 
                         // 홈으로 이동
                         window.location.href = '/';
