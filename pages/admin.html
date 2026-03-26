@@ -411,7 +411,7 @@
         try {
             const config = await getConfig();
             const baseUrl = config.api.baseUrl;
-            const res = await fetch(baseUrl + '/api/memberships', {
+            const res = await fetch(baseUrl + '/api/admin/memberships', {
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -509,7 +509,7 @@
             const config = await getConfig();
             const baseUrl = config.api.baseUrl;
             const token = getToken();
-            const res = await fetch(baseUrl + '/api/products/images', {
+            const res = await fetch(baseUrl + '/api/products/admin/images', {
                 method: 'POST',
                 credentials: 'include',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {},
