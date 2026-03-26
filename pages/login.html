@@ -4,421 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>로그인 - CommerceHub</title>
+    <title>로그인 - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/theme.js"></script>
     <script src="/js/cookie-util.js"></script>
     <script src="/js/app-config.js"></script>
     <script src="/js/api-handler.js"></script>
     <script src="/js/api-validator.js"></script>
-    <script>
-        let currentStep = 0;
-
-        function goNext() {
-            const intro = document.getElementById('intro-screen');
-            const login = document.getElementById('login-screen');
-
-            const script1 = document.querySelector('.script-1');
-            const script2 = document.querySelector('.script-2');
-
-            const introTitle = document.querySelector('.intro-title');
-            const bubble = document.querySelector('.speech-bubble');
-            const content = document.querySelector('.intro-content');
-            const transform = document.getElementById('transform-text');
-            const nextButton = document.querySelector('.start-btn');
-
-            if (currentStep === 0) {
-                script1.classList.remove('active');
-                script2.classList.add('active');
-                currentStep = 1;
-                nextButton.textContent = '다음';
-                return;
-            }
-
-            const bg1 = document.querySelector('.bg-1');
-            const bg2 = document.querySelector('.bg-2');
-
-            if (currentStep === 1) {
-                introTitle.style.display = "none";
-                bubble.style.display = "none";
-                content.style.display = "none";
-
-                bg2.style.opacity = "1";
-                bg1.style.opacity = "0";
-                transform.style.display = "block";
-
-                setTimeout(() => {
-                    intro.style.display = "none";
-                    login.style.display = "flex";
-                    login.style.opacity = "0";
-                    login.style.transition = "opacity 0.6s ease";
-
-                    const loginBubble = document.querySelector('.speech-bubble-login');
-
-                    setTimeout(() => {
-                        login.style.opacity = "1";
-
-                        if (loginBubble) {
-                            loginBubble.style.display = "block";
-                        }
-                    }, 50);
-                }, 3000);
-
-                return;
-            }
-        }
-    </script>
+    <!-- intro script removed -->
     <style>
-        #intro-screen {
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
+        #login-screen {
+            min-height: 100vh;
             display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            background-color: #ffffff;
+            background: var(--bg-secondary);
         }
 
+        .login-logo { height: 64px; margin-bottom: 0.5rem; }
+        .login-subtitle { color: var(--text-secondary); font-size: 0.95rem; }
 
-        .gsi-material-button {
-            -moz-user-select: none;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            -webkit-appearance: none;
-            background-color: #f2f2f2;
-            background-image: none;
-            border: none;
-            -webkit-border-radius: 20px;
-            border-radius: 20px;
-            -webkit-box-sizing: border-box;
-            box-sizing: border-box;
-            color: #1f1f1f;
-            cursor: pointer;
-            font-family: 'Roboto', arial, sans-serif;
-            font-size: 14px;
-            height: 40px;
-            letter-spacing: 0.25px;
-            outline: none;
-            overflow: hidden;
-            padding: 0 12px;
-            position: relative;
+        .login-card {
+            border: 3px solid #111 !important;
+            box-shadow: 6px 6px 0 #FF1493;
+            overflow: visible !important;
+        }
+
+        .login-card .card-header {
             text-align: center;
-            -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
-            transition: background-color .218s, border-color .218s, box-shadow .218s;
-            vertical-align: middle;
-            white-space: nowrap;
-            width: auto;
-            max-width: 400px;
-            min-width: min-content;
+            font-size: 1.2rem;
+            border-bottom: 2px dashed #FF1493;
+            padding-bottom: 0.75rem;
         }
 
-        .gsi-material-button .gsi-material-button-icon {
-            height: 20px;
-            margin-right: 10px;
-            min-width: 20px;
-            width: 20px;
+        .login-divider {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #e0e0e0;
         }
 
-        .gsi-material-button .gsi-material-button-content-wrapper {
-            -webkit-align-items: center;
-            align-items: center;
+        .social-divider {
             display: flex;
-            -webkit-flex-direction: row;
-            flex-direction: row;
-            -webkit-flex-wrap: nowrap;
-            flex-wrap: nowrap;
-            height: 100%;
-            justify-content: space-between;
-            position: relative;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 0.75rem;
+        }
+        .social-divider::before,
+        .social-divider::after {
+            content: '';
+            flex: 1;
+            border-top: 2px dashed #e0e0e0;
+        }
+        .social-divider span {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
             width: 100%;
-        }
-
-        .gsi-material-button .gsi-material-button-contents {
-            -webkit-flex-grow: 1;
-            flex-grow: 1;
-            font-family: 'Roboto', arial, sans-serif;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: top;
-        }
-
-        .gsi-material-button .gsi-material-button-state {
-            -webkit-transition: opacity .218s;
-            transition: opacity .218s;
-            bottom: 0;
-            left: 0;
-            opacity: 0;
-            position: absolute;
-            right: 0;
-            top: 0;
-        }
-
-        .gsi-material-button:disabled {
-            cursor: default;
-            background-color: #ffffff61;
-        }
-
-        .gsi-material-button:disabled .gsi-material-button-state {
-            background-color: #1f1f1f1f;
-        }
-
-        .gsi-material-button:disabled .gsi-material-button-contents {
-            opacity: 38%;
-        }
-
-        .gsi-material-button:disabled .gsi-material-button-icon {
-            opacity: 38%;
-        }
-
-        .gsi-material-button:not(:disabled):active .gsi-material-button-state,
-        .gsi-material-button:not(:disabled):focus .gsi-material-button-state {
-            background-color: #001d35;
-            opacity: 12%;
-        }
-
-        .gsi-material-button:not(:disabled):hover {
-            -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
-            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
-        }
-
-        .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
-            background-color: #001d35;
-            opacity: 8%;
-        }
-
-        .intro-bg {
-            position: absolute;
-            inset: 0;
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: cover;
-            transition: opacity 0.8s ease;
-            z-index: 0;
-        }
-
-        .bg-1 {
-            background-image: url('/images/kindom.jpg');
-            opacity: 1;
-        }
-
-        .bg-2 {
-            background-image: url('/images/ASMRZ.jpg');
-            opacity: 0;
-        }
-
-        .intro-title,
-        .speech-bubble,
-        .intro-content,
-        #transform-text {
-            position: relative;
-            z-index: 1;
-        }
-
-        .script {
-            display: none;
-            margin: 0;
-            font-size: 1rem;
-            color: #222;
-            user-select: none;
-        }
-
-        .script.active {
-            display: block;
-        }
-
-        .intro-title {
-            position: absolute;
-            top: 32px;
-            left: 32px;
-            margin: 0;
-
-            color: white;
-            font-size: 2rem;
+            padding: 0.7rem 1rem;
+            border: 2px solid #111;
+            border-radius: 0;
+            font-size: 0.95rem;
             font-weight: 700;
-            text-shadow: 0 0 8px rgba(255,255,255,0.6),
-            0 0 16px rgba(255,77,166,0.5);
-            z-index: 1001;
-
-            user-select: none;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .social-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 4px 4px 0 #111;
+        }
+        .social-btn img {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
         }
 
-        .intro-content {
+        .social-btn-kakao {
+            background: #FEE500;
+            color: #191919;
+        }
+        .social-btn-google {
+            background: #fff;
+            color: #333;
+        }
+        .social-buttons {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .character {
-            margin: 0 auto;
-            width: 300px;
-            animation: float 2s ease-in-out infinite;
-        }
-
-        .start-btn {
-            margin: 0 auto;
-            padding: 12px 24px;
-            font-size: 16px;
-
-            background: transparent;
-            color: #ff4da6;
-            border: 2px solid #ff4da6;
-
-            border-radius: 8px;
-            cursor: pointer;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .start-btn:hover {
-            background: #ff4da6;
-            color: white;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .speech-bubble {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-20%);
-            background: #ffffff;
-            border-radius: .4em;
-            padding: 11px 18px;
-            min-width: 280px;
-            text-align: center;
-            z-index: 1002;
-        }
-
-        .speech-bubble:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border: 9px solid transparent;
-            border-top-color: #ffffff;
-            border-bottom: 0;
-            border-left: 0;
-            margin-left: -4.5px;
-            margin-bottom: -9px;
-        }
-
-        .butler-area {
-            position: absolute;
-            right: 25%;
-            top : 55%;
-            width: fit-content;
-            height: 260px;
-            margin-top: 2rem;
-            overflow: visible;
-        }
-
-        .Butler-desc-image {
-            width: 220px;
-            position: absolute;
-            right: -40px;
-            bottom: 0;
-            z-index: 1;
-        }
-
-        .speech-bubble-login {
-            position: absolute;
-            top: -30px;
-            right: -100px;
-            background: #ffffff;
-            border-radius: .4em;
-            padding: 11px 18px;
-            min-width: 260px;
-            text-align: center;
-            z-index: 2;
-            display: none; /* 처음엔 숨김 */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        }
-
-        .speech-bubble-login:after {
-            content: '';
-            position: absolute;
-            right: 50%;
-            bottom: -9px;
-            width: 0;
-            height: 0;
-            border: 9px solid transparent;
-            border-top-color: #ffffff;
-            border-bottom: 0;
-        }
-
-        .transform-msg {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-
-            font-size: 3rem;
-            font-weight: bold;
-            color: white;
-
-            /* 네온 느낌 */
-            text-shadow: 0 0 10px white,
-            0 0 20px #ff4da6,
-            0 0 40px #ff4da6;
-
-            z-index: 2000;
-        }
-
-        @keyframes flash {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        .transform-msg {
-            white-space: nowrap;
-            animation: flash 1s ease-in-out infinite;
+            gap: 0.6rem;
         }
     </style>
 </head>
 <body>
 
-    <div id="intro-screen">
-        <div class="intro-bg bg-1"></div>
-        <div class="intro-bg bg-2"></div>
-        <h2 class="intro-title">やれやれ、わがままなお嬢様...</h2>
+    <!-- 인트로 스크린-->
+<!--    <div id="intro-screen">-->
+<!--        <div class="intro-bg bg-1"></div>-->
+<!--        <div class="intro-bg bg-2"></div>-->
+<!--        <h2 class="intro-title">やれやれ、わがままなお嬢様...</h2>-->
 
-        <div class="speech-bubble">
-            <p class="script script-1 active">어..! 아가씨!? 어떻게 여기에..!</p>
-            <p class="script script-2">이런 얼른 예의를..!</p>
-        </div>
+<!--        <div class="speech-bubble">-->
+<!--            <p class="script script-1 active">어..! 아가씨!? 어떻게 여기에..!</p>-->
+<!--            <p class="script script-2">이런 얼른 예의를..!</p>-->
+<!--        </div>-->
 
-        <div class="intro-content">
-            <div class="intro-content-1">
-                <img src="/images/danaka.png" class="character">
-            </div>
-            <button class="start-btn" onclick="goNext()">다음</button>
-        </div>
+<!--        <div class="intro-content">-->
+<!--            <div class="intro-content-1">-->
+<!--                <img src="/images/danaka.png" class="character">-->
+<!--            </div>-->
+<!--            <button class="start-btn" onclick="goNext()">다음</button>-->
+<!--        </div>-->
 
-        <div id="transform-text" style="display: none;">
-            <p style="" class="transform-msg">변신!</p>
-        </div>
-    </div>
+<!--        <div id="transform-text" style="display: none;">-->
+<!--            <p class="transform-msg">변신!</p>-->
+<!--        </div>-->
+<!--    </div>-->
+   
 
-    <div id="login-screen"  style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
-        <div style="width: 100%; max-width: 400px; padding: 2rem;">
+    <div id="login-screen">
+        <div style="width: 100%; max-width: 420px; padding: 2rem; position: relative;">
             <div style="text-align: center; margin-bottom: 2rem;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">🌸 야래야래</h1>
-                <p style="color: var(--text-secondary);">🤵‍♂️아가씨를 위한 랜덤스쿱 플랫폼</p>
+                <img src="/images/logo.png" alt="YARE, YARE" class="login-logo">
+                <p class="login-subtitle">★ 아가씨를 위한 랜덤스쿱 플랫폼 ★</p>
             </div>
 
-            <div class="card">
-                <div class="card-header" style="text-align: center;">로그인</div>
+            <div class="card login-card">
+                <div class="card-header">♡ 로그인 ♡</div>
                 <div class="card-body">
                     <div id="error-message" class="alert alert-danger" style="margin-bottom: 1rem; display: none;">
                         <strong>⚠️ 로그인 실패</strong><br>
@@ -435,34 +151,33 @@
                             <input type="password" id="password" class="form-input" placeholder="••••••••" required>
                         </div>
 
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">로그인</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; background: #111; border-color: #111;">로그인 ☆</button>
                     </form>
 
-                    <a class="gsi-material-button" href="http://localhost:8080/oauth2/authorization/google">
-                        <div class="gsi-material-button-state"></div>
-                        <div class="gsi-material-button-content-wrapper">
-                            <div class="gsi-material-button-icon">
-                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
-                                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                                    <path fill="none" d="M0 0h48v48H0z"></path>
-                                </svg>
-                            </div>
-                            <span class="gsi-material-button-contents">Google 계정으로 로그인</span>
-                            <span style="display: none;">Google 계정으로 로그인</span>
-                        </div>
-                    </a>
-
-                    <div style="margin-top: 1.5rem; text-align: center;">
-                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">계정이 없으신가요?</p>
-                        <a href="/pages/register.html" class="btn btn-outline" style="width: 100%;">회원가입</a>
+                    <div class="social-divider"><span>★ 소셜 로그인 ★</span></div>
+                    <div class="social-buttons">
+                        <button type="button" class="social-btn social-btn-kakao" onclick="socialLogin('kakao')">
+                            <img src="/images/kakao_icons.png" alt="Kakao"> 카카오 로그인
+                        </button>
+                        <button type="button" class="social-btn social-btn-google" onclick="socialLogin('google')">
+                            <img src="/images/google_icons.png" alt="Google"> 구글 로그인
+                        </button>
                     </div>
 
-                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                    <!-- 말풍선: 카드 우측 밖으로 튀어나감 -->
+                    <div style="position: relative; margin-top: 1.5rem;">
+                        <div style="position: absolute; right: -135px; top: -25px; background: #fff; border: 2px solid #FF1493; padding: 10px 16px; white-space: nowrap; z-index: 10; box-shadow: 3px 3px 0 #111;">
+                            <p style="font-size: 0.9rem; color: #222; margin: 0;">처음 방문 하신 아가씨들은 "회원 가입"으로.. ♡</p>
+                            <div style="position: absolute; bottom: -8px; left: 50%; margin-left: -8px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #FF1493;"></div>
+                        </div>
+                        <div style="padding-top: 2.5rem;">
+                            <a href="/pages/register.html" class="btn btn-outline" style="width: 100%; border-color: #FF1493; color: #FF1493;">회원가입</a>
+                        </div>
+                    </div>
+
+                    <div class="login-divider">
                         <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                            <strong>테스트 계정:</strong>
+                            <strong>★ 테스트 계정:</strong>
                         </p>
                         <ul style="color: var(--text-secondary); font-size: 0.875rem; list-style: none; padding: 0;">
                             <li>📧 admin@test.com / admin</li>
@@ -471,20 +186,32 @@
                 </div>
             </div>
 
+            <!-- 집사 이미지 (평가용 주석처리)
             <div class="butler-area">
-                <div class="speech-bubble-login">
-                    <p style="font-size: 1rem; color: #222; white-space: nowrap;">처음 방문 하신 아가씨들은 "회원 가입"으로..</p>
-                </div>
                 <img class="Butler-desc-image" src="/images/ASMRZ-2.png">
             </div>
-
-            <div style="text-align: center; margin-top: 2rem;">
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
-            </div>
+            -->
         </div>
     </div>
 
     <script>
+        // ── 소셜 로그인 ──
+        async function socialLogin(provider) {
+            const config = await getConfig();
+            const baseUrl = config.api.baseUrl;
+            window.location.href = baseUrl + '/oauth2/authorization/' + provider;
+        }
+
+        // OAuth2 콜백: URL에 access_token이 있으면 저장 후 홈으로 이동
+        (function handleOAuth2Callback() {
+            const params = new URLSearchParams(window.location.search);
+            const accessToken = params.get('access_token');
+            if (accessToken) {
+                saveToken(accessToken);
+                window.location.href = '/';
+            }
+        })();
+
         async function handleLogin(event) {
             event.preventDefault();
 
@@ -515,13 +242,12 @@
 
                 if (result.data.success) {
                     // Authorization 헤더에서 토큰 추출
-                    const authHeader = result.headers['authorization']
-                    const refresh_token = result.headers['x-refresh-token']
+                    const authHeader = result.headers['authorization'];
                     if (authHeader && authHeader.startsWith('Bearer ')) {
                         const token = authHeader.substring(7);  // "Bearer " 제거
+
                         // JWT 토큰을 쿠키에 저장
                         saveToken(token);
-                        saveRefreshToken(refresh_token.substring(7));
 
                         // 홈으로 이동
                         window.location.href = '/';
@@ -546,5 +272,8 @@
             window.location.href = '/';
         }
     </script>
+        <script src="/js/stickers.js"></script>
+        <script src="/js/checker-deco.js"></script>
+    <script src="/js/bling.js"></script>
 </body>
 </html>

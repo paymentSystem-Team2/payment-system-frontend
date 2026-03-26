@@ -21,7 +21,6 @@ async function makeApiRequest(endpointKey, options = {}) {
     try {
         // 설정에서 엔드포인트 계약 가져오기
         const config = await getConfig();
-        console.log(config)
         const endpointContract = config.api.endpoints[endpointKey];
 
         if (!endpointContract) {
@@ -30,7 +29,6 @@ async function makeApiRequest(endpointKey, options = {}) {
 
         // method를 YAML 설정에서 자동으로 가져옴 (options에서 override 가능)
         const method = options.method || endpointContract.method || 'GET';
-        console.log(method)
         // URL 생성
         const url = await buildApiUrl(endpointKey, pathParams);
 
@@ -64,8 +62,6 @@ async function makeApiRequest(endpointKey, options = {}) {
             fetchOptions.body = JSON.stringify(body);
         }
 
-        console.log('url', url)
-        console.log('fetchOptions', fetchOptions)
         const response = await fetch(url, fetchOptions);
 
         // 401 Unauthorized 응답 시 로그인 페이지로 이동 (쿠키 삭제)
@@ -75,10 +71,16 @@ async function makeApiRequest(endpointKey, options = {}) {
             return;
         }
         const text = await response.text();
-        const data = text ? JSON.parse(text) : {
-            error: '응답 본문 없음',
-            status: response.status
-        };
+        let data;
+        if (text && text.trim()) {
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                data = { error: '응답 파싱 실패', raw: text, status: response.status };
+            }
+        } else {
+            data = { success: response.ok, status: response.status };
+        }
 
         // 응답 표시 및 에러 처리
         if (!response.ok) {

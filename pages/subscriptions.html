@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>구독 관리 - Commerce Demo</title>
+    <title>구독 관리 - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script src="/js/cookie-util.js"></script>
@@ -18,7 +18,7 @@
 <body>
 <nav class="navbar">
     <div class="navbar-container">
-        <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+        <a href="/" class="navbar-brand"><img src="/images/logo.png" alt="YARE, YARE"></a>
         <ul class="navbar-nav">
             <li><a href="/" class="nav-link">홈</a></li>
             <li><a href="/pages/shop.html" class="nav-link">상점</a></li>
@@ -143,12 +143,28 @@
     </div>
 </div>
 <script>
+    if (!checkLogin()) throw new Error('redirect');
+
     // Get subscriptionId from URL
     const urlParams = new URLSearchParams(window.location.search);
     const subscriptionIdParam = urlParams.get('subscriptionId');
     if (subscriptionIdParam) {
         document.getElementById('subscription-id').value = subscriptionIdParam;
     }
+    // Dummy subscription data for preview when API is unavailable
+    const dummySubscriptions = {
+        'sub_preview_001': { subscriptionId: 'sub_preview_001', planId: 'plan_pro', amount: 19900, status: 'ACTIVE', cancelAtPeriodEnd: false, currentPeriodEnd: '2026-04-24T23:59:59', customerUid: 'PREVIEW-001' },
+        'sub_preview_002': { subscriptionId: 'sub_preview_002', planId: 'plan_basic', amount: 9900, status: 'ACTIVE', cancelAtPeriodEnd: true, currentPeriodEnd: '2026-04-01T23:59:59', customerUid: 'PREVIEW-001' },
+        'sub_preview_003': { subscriptionId: 'sub_preview_003', planId: 'plan_max', amount: 39900, status: 'CANCELLED', cancelAtPeriodEnd: false, currentPeriodEnd: '2026-03-15T23:59:59', customerUid: 'PREVIEW-001' },
+    };
+
+    // Auto-load subscription on page load if subscriptionId is in URL
+    document.addEventListener('DOMContentLoaded', () => {
+        if (subscriptionIdParam) {
+            getSubscription();
+        }
+    });
+
     async function getSubscription() {
         const subscriptionId = document.getElementById('subscription-id').value.trim();
         if (!subscriptionId) {
@@ -199,15 +215,45 @@
             showNotification('구독 정보를 불러왔습니다', 'success');
         } catch (error) {
             console.error('Failed to get subscription:', error);
-            // 구독 상세 영역 숨김
-            document.getElementById('subscription-details').style.display = 'none';
-            // API 미구현 에러 처리
-            if (error.message.includes('404') || error.message.includes('Not Found')) {
-                showNotification('⚠️ 구독 조회 API가 구현되지 않았습니다. GET /api/subscriptions/{subscriptionId} 엔드포인트를 구현해주세요.', 'error');
-            } else if (error.message.includes('500') || error.message.includes('501')) {
-                showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
+            // Fallback: use dummy data for preview
+            const dummySub = dummySubscriptions[subscriptionId];
+            if (dummySub) {
+                console.log('Using preview dummy subscription data');
+                const subscription = dummySub;
+                const periodEnd = subscription.currentPeriodEnd
+                    ? subscription.currentPeriodEnd.substring(0, 19).replace('T', ' ')
+                    : 'N/A';
+                const isCancelPending = subscription.status === 'ACTIVE' && subscription.cancelAtPeriodEnd === true;
+                document.getElementById('sub-plan-id').textContent = subscription.planId;
+                document.getElementById('sub-amount').textContent = `₩${subscription.amount.toLocaleString()}`;
+                document.getElementById('sub-status').textContent = isCancelPending ? '해지 예정' : subscription.status;
+                document.getElementById('sub-customer-uid').textContent = subscription.customerUid;
+                const isPending = subscription.status === 'PENDING';
+                document.getElementById('sub-period-end').textContent = isPending ? '첫 결제 대기' : periodEnd;
+                const periodEndLabel = document.getElementById('sub-period-end-label');
+                if (periodEndLabel) {
+                    periodEndLabel.textContent = isPending ? '상태:' : '현재 이용 기간 종료일:';
+                }
+                const cancelScheduleText = document.getElementById('sub-cancel-schedule');
+                if (cancelScheduleText) {
+                    if (isCancelPending) {
+                        cancelScheduleText.style.display = 'block';
+                        cancelScheduleText.textContent = `해지 예정일: ${periodEnd}`;
+                    } else {
+                        cancelScheduleText.style.display = 'none';
+                    }
+                }
+                const cancelButton = document.getElementById('cancel-subscription-btn');
+                if (cancelButton) {
+                    const isAlreadyClosed = subscription.status === 'CANCELLED' || subscription.status === 'EXPIRED';
+                    cancelButton.textContent = isCancelPending ? '구독 계속 유지' : '구독 해지';
+                    cancelButton.disabled = isAlreadyClosed;
+                }
+                document.getElementById('subscription-details').style.display = 'block';
             } else {
-                showNotification(`구독 정보 조회 실패: ${error.message}`, 'error');
+                // No matching dummy data - show helpful message with available dummy IDs
+                document.getElementById('subscription-details').style.display = 'none';
+                showNotification('API 미연결 상태입니다. 미리보기용 구독 ID: sub_preview_001, sub_preview_002, sub_preview_003', 'warning');
             }
         }
     }
@@ -293,14 +339,32 @@
             showNotification('청구 내역을 불러왔습니다', 'success');
         } catch (error) {
             console.error('Failed to get billing history:', error);
-            // API 미구현 에러 처리
-            if (error.message.includes('404') || error.message.includes('Not Found')) {
-                showNotification('⚠️ 청구 내역 조회 API가 구현되지 않았습니다. GET /api/subscriptions/{subscriptionId}/billings 엔드포인트를 구현해주세요.', 'error');
-            } else if (error.message.includes('500') || error.message.includes('501')) {
-                showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
-            } else {
-                showNotification(`청구 내역 조회 실패: ${error.message}`, 'error');
-            }
+            // Fallback dummy billing history for preview
+            console.log('Using preview dummy billing history');
+            const dummyBillings = [
+                { periodStart: '2026-03-01T00:00:00', periodEnd: '2026-03-31T23:59:59', status: 'COMPLETED', amount: 19900, attemptDate: '2026-03-01T09:00:00', failureMessage: null },
+                { periodStart: '2026-02-01T00:00:00', periodEnd: '2026-02-28T23:59:59', status: 'COMPLETED', amount: 19900, attemptDate: '2026-02-01T09:00:00', failureMessage: null },
+                { periodStart: '2026-01-01T00:00:00', periodEnd: '2026-01-31T23:59:59', status: 'COMPLETED', amount: 19900, attemptDate: '2026-01-01T09:00:00', failureMessage: null },
+            ];
+            const container = document.getElementById('billing-history-container');
+            const listDiv = document.getElementById('billing-history-list');
+            listDiv.innerHTML = dummyBillings.map(billing => {
+                const periodStart = billing.periodStart.substring(0, 10);
+                const periodEnd = billing.periodEnd.substring(0, 10);
+                return `
+                    <div style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${periodStart} ~ ${periodEnd}</strong>
+                                <div style="color: var(--success); font-size: 0.875rem; margin-top: 0.25rem;">${billing.status}</div>
+                            </div>
+                            <span style="color: var(--success); font-weight: 600;">₩${billing.amount.toLocaleString()}</span>
+                        </div>
+                        ${billing.attemptDate ? `<div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.5rem;">결제 시도: ${billing.attemptDate.substring(0, 19).replace('T', ' ')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            container.style.display = 'block';
         }
     }
     async function cancelSubscription() {
@@ -340,5 +404,7 @@
         }
     }
 </script>
+        <script src="/js/stickers.js"></script>
+    <script src="/js/bling.js"></script>
 </body>
 </html>

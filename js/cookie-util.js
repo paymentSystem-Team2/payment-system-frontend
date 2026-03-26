@@ -55,7 +55,7 @@ function saveToken(token) {
  * @param {string} token - JWT 토큰
  */
 function saveRefreshToken(token) {
-    setCookie('refresh_token', token, 14);
+    setCookie('jwt_refresh_token', token, 7);  // 7일 유효
 }
 
 /**
@@ -96,6 +96,19 @@ function decodeJWT(token) {
         console.error('JWT 디코딩 실패:', error);
         return null;
     }
+}
+
+/**
+ * 로그인 체크 - 토큰 없으면 로그인 페이지로 이동
+ * 각 페이지 스크립트 최상단에서 호출
+ */
+function checkLogin() {
+    const token = getToken();
+    if (!token) {
+        window.location.href = '/pages/login.html';
+        return false;
+    }
+    return true;
 }
 
 /**

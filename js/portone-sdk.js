@@ -99,18 +99,13 @@ async function openPortOnePayment(paymentData) {
             });
             throw new Error(response.message);
         } else {
-            // 결제 성공 이후 후속 confirm/cancel API는 서버가 만든 paymentId를 기준으로 처리함
+            // 결제 성공
             displaySuccess({
-                paymentId: serverPaymentId,
+                paymentId: response.paymentId,
                 txId: response.txId,
-                portonePaymentId: response.paymentId,
                 message: '결제창 완료. 서버에서 검증하세요.'
             });
-            return {
-                ...response,
-                paymentId: serverPaymentId,
-                originalPaymentId: response.paymentId
-            };
+            return response;
         }
     } catch (error) {
         console.error('결제 오류:', error);
@@ -212,19 +207,14 @@ async function openPortOnePaymentWithPoints(paymentData) {
             });
             throw new Error(response.message);
         } else {
-            // 포인트 차감 결제도 후속 confirm/cancel API는 서버가 만든 paymentId를 기준으로 처리한다.
+            // 결제 성공
             displaySuccess({
-                paymentId: serverPaymentId,
+                paymentId: response.paymentId,
                 txId: response.txId,
-                portonePaymentId: response.paymentId,
                 pointsUsed: pointsToUse,
                 message: '결제창 완료 (포인트 차감). 서버에서 검증하세요.'
             });
-            return {
-                ...response,
-                paymentId: serverPaymentId,
-                originalPaymentId: response.paymentId
-            };
+            return response;
         }
     } catch (error) {
         console.error('결제 오류 (포인트):', error);

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>admin - 관리자 사이트</title>
+    <title>Admin - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script src="/js/cookie-util.js"></script>
@@ -13,139 +13,312 @@
     <script src="/js/api-validator.js"></script>
     <script src="/js/theme.js"></script>
     <script src="/js/portone-sdk.js"></script>
-    <script src="/js/auth-check.js"></script>
+    <style>
+        .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; background: #fff; min-height: 100vh; }
+        .admin-header { text-align: center; margin-bottom: 2rem; }
+        .admin-header h1 { font-size: 1.8rem; font-weight: 900; }
+        .admin-header p { color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem; }
+
+        /* 로그인 화면 */
+        .admin-login-wrap { min-height: 80vh; display: flex; align-items: center; justify-content: center; }
+        .admin-login-card { width: 100%; max-width: 380px; }
+        .admin-login-card .card-header { text-align: center; font-size: 1.1rem; border-bottom: 2px dashed #FFD700; padding-bottom: 0.75rem; }
+
+        /* 탭 */
+        .admin-tabs { display: flex; gap: 0; border-bottom: 3px solid #111; margin-bottom: 1.5rem; }
+        .admin-tab {
+            padding: 0.7rem 1.5rem; cursor: pointer; font-weight: 700; font-size: 0.9rem;
+            background: #f5f5f5; border: 2px solid #e0e0e0; border-bottom: none;
+            color: var(--text-secondary); transition: all 0.15s;
+        }
+        .admin-tab:hover { background: #eee; }
+        .admin-tab.active { background: #111; color: #FFD700; border-color: #111; }
+        .admin-panel { display: none; }
+        .admin-panel.active { display: block; }
+
+        /* 테이블 */
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .admin-table th { padding: 0.75rem; text-align: left; border-bottom: 2px solid #111; font-weight: 700; background: #fafafa; }
+        .admin-table td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+        .admin-table tr:hover td { background: #fdf5f9; }
+
+        /* 상태 뱃지 */
+        .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.8rem; font-weight: 600; }
+
+        /* 카드 그리드 */
+        .membership-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .membership-card {
+            border: 2px solid #e0e0e0; padding: 1.5rem; text-align: center; transition: all 0.2s;
+        }
+        .membership-card:hover { border-color: #FFD700; box-shadow: 4px 4px 0 #111; }
+        .membership-card .grade-name { font-size: 1.3rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .membership-card .grade-rate { font-size: 2rem; font-weight: 900; color: #e75480; }
+        .membership-card .grade-threshold { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem; }
+
+        /* 업로드 폼 */
+        .upload-area {
+            border: 3px dashed #e0e0e0; padding: 2rem; text-align: center;
+            cursor: pointer; transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #FFD700; }
+        .upload-area.dragover { border-color: #e75480; background: #fff0f5; }
+        .upload-preview { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+        .upload-preview-item {
+            position: relative; width: 100px; height: 100px; border: 2px solid #e0e0e0;
+            overflow: hidden;
+        }
+        .upload-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .upload-preview-item .remove-btn {
+            position: absolute; top: 2px; right: 2px; background: #111; color: #FFD700;
+            border: none; width: 20px; height: 20px; cursor: pointer; font-size: 0.7rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .upload-preview-item .thumb-badge {
+            position: absolute; bottom: 0; left: 0; right: 0; background: #FFD700; color: #111;
+            font-size: 0.65rem; font-weight: 700; text-align: center; padding: 1px 0;
+        }
+
+        /* 포인트 이력 */
+        .point-type { font-weight: 700; }
+        .point-type.earn { color: #e75480; }
+        .point-type.use { color: #111; }
+
+        /* API 패널 */
+        .api-panel-mini {
+            position: fixed; bottom: 1rem; right: 1rem; width: 350px; max-height: 300px;
+            background: #111; color: #ccc; border: 2px solid #FFD700; z-index: 100;
+            font-size: 0.75rem; overflow: hidden; display: none;
+        }
+        .api-panel-mini.open { display: block; }
+        .api-panel-mini pre { padding: 0.75rem; overflow: auto; max-height: 250px; margin: 0; white-space: pre-wrap; }
+        .api-panel-toggle {
+            position: fixed; bottom: 1rem; right: 1rem; background: #111; color: #FFD700;
+            border: 2px solid #FFD700; padding: 0.5rem 1rem; cursor: pointer; z-index: 101;
+            font-weight: 700; font-size: 0.8rem;
+        }
+    </style>
 </head>
 <body>
-<div class="main-container">
-    <div class="content-area">
-        <h1 style="font-size: 2rem; margin-bottom: 2rem;">📦 전체 주문 관리</h1>
 
-        <!-- 주문 목록 -->
-        <div class="card">
-            <div class="card-header">전체 주문 목록</div>
+<!-- 관리자 로그인 화면 -->
+<div id="admin-login-screen" class="admin-login-wrap">
+    <div class="admin-login-card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="/images/logo.png" alt="YARE, YARE" style="height: 50px;">
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">Admin Console</p>
+        </div>
+        <div class="card" style="border: 3px solid #111; box-shadow: 5px 5px 0 #FFD700;">
+            <div class="card-header admin-login-card" style="text-align:center; font-size:1.1rem; border-bottom:2px dashed #FFD700; padding-bottom:0.75rem;">관리자 로그인</div>
             <div class="card-body">
-                <div id="order-list-loading" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                    주문 목록을 불러오는 중...
+                <div id="admin-login-error" class="alert alert-danger" style="display:none; margin-bottom:1rem;">
+                    <span id="admin-login-error-text"></span>
                 </div>
-                <div id="order-list-container" style="display: none;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
-                            <th style="padding: 0.75rem;">주문 번호</th>
-                            <th style="padding: 0.75rem;">주문 ID</th>
-                            <th style="padding: 0.75rem;">금액</th>
-                            <th style="padding: 0.75rem;">포인트</th>
-                            <th style="padding: 0.75rem;">상태</th>
-                            <th style="padding: 0.75rem; text-align: center;">작업</th>
-                        </tr>
-                        </thead>
-                        <tbody id="order-list-body">
-                        <!-- 주문 목록이 여기에 렌더링됩니다 -->
-                        </tbody>
-                    </table>
-                </div>
+                <form onsubmit="handleAdminLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">이메일</label>
+                        <input type="email" id="admin-email" class="form-input" placeholder="admin@test.com" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input type="password" id="admin-password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; background:#111; border-color:#111;">관리자 로그인</button>
+                </form>
             </div>
-        </div>
-    </div>
-
-    <div class="api-panel">
-        <div class="panel-section">
-            <h3 class="panel-title">📡 현재 엔드포인트</h3>
-            <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
-        </div>
-        <div class="panel-section">
-            <h3 class="panel-title">📤 요청</h3>
-            <textarea id="request-body" class="api-textarea"></textarea>
-        </div>
-        <div class="panel-section">
-            <h3 class="panel-title">📥 응답</h3>
-            <pre id="response-output" class="response-box">요청 대기 중...</pre>
         </div>
     </div>
 </div>
 
+<!-- 관리자 대시보드 -->
+<div id="admin-dashboard" class="admin-wrap" style="display:none;">
+    <div class="admin-header">
+        <h1>YARE YARE Admin</h1>
+        <p>관리자 대시보드</p>
+    </div>
+
+    <!-- 탭 네비게이션 -->
+    <div class="admin-tabs">
+        <div class="admin-tab active" onclick="switchTab('orders')">주문 관리</div>
+        <div class="admin-tab" onclick="switchTab('membership')">멤버십 정책</div>
+        <div class="admin-tab" onclick="switchTab('images')">상품 이미지</div>
+        <div class="admin-tab" onclick="switchTab('points')">포인트 이력</div>
+    </div>
+
+    <!-- 1. 주문 관리 -->
+    <div id="panel-orders" class="admin-panel active">
+        <div id="order-list-loading" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+            주문 목록을 불러오는 중...
+        </div>
+        <div id="order-list-empty" style="display:none; text-align:center; padding:2rem; color:var(--text-secondary);">
+            주문이 없습니다.
+        </div>
+        <div id="order-list-container" style="display:none;">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>주문 번호</th>
+                    <th>주문 ID</th>
+                    <th>금액</th>
+                    <th>포인트</th>
+                    <th>상태</th>
+                    <th style="text-align:center;">작업</th>
+                </tr>
+                </thead>
+                <tbody id="order-list-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 2. 멤버십 정책 -->
+    <div id="panel-membership" class="admin-panel">
+        <div id="membership-loading" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+            멤버십 정책을 불러오는 중...
+        </div>
+        <div id="membership-container" style="display:none;">
+            <div id="membership-grid" class="membership-grid"></div>
+        </div>
+    </div>
+
+    <!-- 3. 상품 이미지 업로드 -->
+    <div id="panel-images" class="admin-panel">
+        <div class="card" style="border:2px solid #111;">
+            <div class="card-header">상품 이미지 업로드</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">상품 ID</label>
+                    <input type="text" id="upload-product-id" class="form-input" placeholder="상품 ID 입력">
+                </div>
+                <div class="upload-area" id="upload-dropzone" onclick="document.getElementById('upload-files').click()">
+                    <p style="font-size:1.2rem; margin-bottom:0.5rem;">클릭 또는 드래그하여 이미지 업로드</p>
+                    <p style="color:var(--text-secondary); font-size:0.85rem;">첫 번째 이미지가 썸네일로 설정됩니다</p>
+                    <input type="file" id="upload-files" multiple accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+                </div>
+                <div id="upload-preview" class="upload-preview"></div>
+                <button class="btn btn-primary" style="width:100%; margin-top:1rem; background:#111; border-color:#111;" onclick="uploadImages()">업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 포인트 이력 -->
+    <div id="panel-points" class="admin-panel">
+        <div id="points-loading" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+            포인트 이력을 불러오는 중...
+        </div>
+        <div id="points-container" style="display:none;">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>거래 ID</th>
+                    <th>유형</th>
+                    <th>포인트</th>
+                    <th>만료일</th>
+                    <th>생성일</th>
+                </tr>
+                </thead>
+                <tbody id="points-list-body"></tbody>
+            </table>
+        </div>
+        <div id="points-empty" style="display:none; text-align:center; padding:2rem; color:var(--text-secondary);">
+            포인트 이력이 없습니다.
+        </div>
+    </div>
+</div>
+
+<!-- API 응답 미니 패널 -->
+<button class="api-panel-toggle" onclick="toggleApiPanel()">API</button>
+<div id="api-mini-panel" class="api-panel-mini">
+    <div style="padding:0.4rem 0.75rem; background:#222; display:flex; justify-content:space-between; align-items:center;">
+        <span style="color:#FFD700; font-weight:700;">API Response</span>
+        <span id="current-endpoint" style="color:#888;"></span>
+    </div>
+    <pre id="response-output" style="color:#ccc;">요청 대기 중...</pre>
+</div>
+<!-- hidden elements for api-handler compatibility -->
+<textarea id="request-body" style="display:none;"></textarea>
+
 <script>
-    // 현재 사용자 정보
     let currentUser = null;
     let orders = [];
+    let uploadFiles = [];
 
-    // API 목록 동적 생성
-    async function populateApiList() {
-        const apiListElement = document.getElementById('api-list-orders');
-        if (!apiListElement) return;
+    // ── 관리자 로그인 ──
+    async function handleAdminLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('admin-email').value;
+        const password = document.getElementById('admin-password').value;
+        const errorEl = document.getElementById('admin-login-error');
+        const errorText = document.getElementById('admin-login-error-text');
+        errorEl.style.display = 'none';
 
         try {
-            // config 로드 대기
             const config = await getConfig();
-            const endpoints = config?.api?.endpoints;
-
-            if (!endpoints) {
-                apiListElement.innerHTML = '';
-                return;
-            }
-
-            // orders.html에 필요한 API들
-            const requiredApis = ['list-orders', 'create-payment', 'confirm-payment', 'cancel-payment'];
-            const apiItems = [];
-
-            requiredApis.forEach(apiKey => {
-                const apiConfig = endpoints[apiKey];
-                if (apiConfig && apiConfig.url) {
-                    const method = apiConfig.method || 'GET';
-                    const description = apiConfig.description || '';
-                    apiItems.push(`<li><code>${method} ${apiConfig.url}</code> - ${description}</li>`);
-                }
+            const baseUrl = config.api.baseUrl;
+            const res = await fetch(baseUrl + '/api/auth/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
             });
 
-            // API가 정의되어 있으면 표시, 없으면 빈 문자열
-            apiListElement.innerHTML = apiItems.join('');
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || '로그인 실패');
+            }
+
+            const sessionUser = await res.json();
+
+            if (sessionUser.role !== 'ADMIN') {
+                throw new Error('관리자 권한이 없습니다.');
+            }
+
+            // 관리자 세션 성공 - 대시보드 표시
+            document.getElementById('admin-login-screen').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+
+            await loadAllData();
         } catch (error) {
-            console.error('API 목록 로드 실패:', error);
-            apiListElement.innerHTML = '';
+            errorText.textContent = error.message;
+            errorEl.style.display = 'block';
         }
     }
 
-    // 페이지 로드 시 초기화
-    document.addEventListener('DOMContentLoaded', async () => {
-        // API 목록 동적 생성 (비동기)
-        populateApiList();
+    // 로그인 후에만 데이터 로드 (handleAdminLogin에서 호출)
 
+    async function loadAllData() {
+        await Promise.all([
+            loadCurrentUser(),
+            loadOrders(),
+            loadMemberships(),
+            loadPointHistory()
+        ]);
+    }
 
-        await loadCurrentUser();
-        await loadOrders();
-    });
+    // ── 탭 전환 ──
+    function switchTab(tabName) {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
 
-    // 사용자 정보 로드
+    // ── 사용자 정보 ──
     async function loadCurrentUser() {
         try {
-            currentUser = await makeApiRequest('get-current-user', {
-            });
-
-            if (!validateApiResponse('get-current-user', currentUser)) {
-                throw new Error('API 응답 형식이 올바르지 않습니다.');
-            }
+            currentUser = await makeApiRequest('get-current-user', {});
         } catch (error) {
-            console.error('Failed to load user info:', error);
             currentUser = null;
         }
     }
 
-    // 주문 목록 로드
+    // ── 주문 관리 ──
     async function loadOrders() {
         const loadingEl = document.getElementById('order-list-loading');
         const containerEl = document.getElementById('order-list-container');
         const emptyEl = document.getElementById('order-list-empty');
 
         try {
-            const result = await makeApiRequest('list-orders', {
-            });
-
-            // YML 스키마 기반 자동 검증
-            if (!validateApiResponse('list-orders', result)) {
-                throw new Error('API 응답 형식이 올바르지 않습니다.');
-            }
-
-            orders = result;
+            const result = await makeApiRequest('list-all-orders', {});
+            orders = result || [];
             loadingEl.style.display = 'none';
 
             if (orders.length === 0) {
@@ -155,207 +328,262 @@
                 renderOrderList();
             }
         } catch (error) {
-            console.error('Failed to load orders:', error);
-            loadingEl.innerHTML = '<span style="color: var(--danger);">주문 목록을 불러오는데 실패했습니다.</span>';
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            emptyEl.textContent = '주문 데이터가 없습니다.';
         }
     }
 
-    // 주문 목록 렌더링
     function renderOrderList() {
         const tbody = document.getElementById('order-list-body');
-        tbody.innerHTML = '';
-
-        orders.forEach(order => {
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid var(--border)';
-
-            // 상태에 따른 스타일
-            const statusStyle = getStatusStyle(order.status);
-
-            // 포인트 정보 구성
+        tbody.innerHTML = orders.map(order => {
             const usedPoints = order.usedPoints || 0;
             const earnedPoints = order.earnedPoints || 0;
             const finalAmount = order.finalAmount || order.totalAmount;
 
-            let pointsDisplay = '';
+            let pointsHtml = '-';
             if (usedPoints > 0 || earnedPoints > 0) {
-                pointsDisplay = '<div style="font-size: 0.875rem;">';
-                if (usedPoints > 0) {
-                    pointsDisplay += `<div style="color: var(--danger);">-${usedPoints.toLocaleString()}P</div>`;
-                }
-                if (earnedPoints > 0) {
-                    pointsDisplay += `<div style="color: var(--success);">+${earnedPoints.toLocaleString()}P</div>`;
-                }
-                pointsDisplay += '</div>';
-            } else {
-                pointsDisplay = '<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>';
+                pointsHtml = '';
+                if (usedPoints > 0) pointsHtml += `<div style="color:#111;">-${usedPoints.toLocaleString()}P</div>`;
+                if (earnedPoints > 0) pointsHtml += `<div style="color:#e75480;">+${earnedPoints.toLocaleString()}P</div>`;
             }
 
-            tr.innerHTML = `
-                    <td style="padding: 0.75rem; font-weight: 600;">${order.orderNumber}</td>
-                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">${order.orderId}</td>
-                    <td style="padding: 0.75rem;">
-                        <div style="font-weight: 600;">${order.totalAmount.toLocaleString()}원</div>
-                        ${usedPoints > 0 ? `<div style="font-size: 0.75rem; color: var(--text-secondary);">실결제: ${finalAmount.toLocaleString()}원</div>` : ''}
-                    </td>
-                    <td style="padding: 0.75rem;">
-                        ${pointsDisplay}
-                    </td>
-                    <td style="padding: 0.75rem;">
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">
-                            ${getStatusText(order.status)}
-                        </span>
-                    </td>
-                    <td style="padding: 0.75rem; text-align: center;">
-                        ${getActionButton(order, finalAmount)}
-                    </td>
-                `;
-
-            tbody.appendChild(tr);
-        });
+            return `<tr>
+                <td style="font-weight:600;">${order.orderNumber}</td>
+                <td style="font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${order.orderId}</td>
+                <td>
+                    <div style="font-weight:600;">${order.totalAmount.toLocaleString()}원</div>
+                    ${usedPoints > 0 ? `<div style="font-size:0.75rem; color:var(--text-secondary);">실결제: ${finalAmount.toLocaleString()}원</div>` : ''}
+                </td>
+                <td style="font-size:0.85rem;">${pointsHtml}</td>
+                <td><span class="status-badge" style="${getStatusStyle(order.status)}">${getStatusText(order.status)}</span></td>
+                <td style="text-align:center;">${getActionButton(order)}</td>
+            </tr>`;
+        }).join('');
     }
 
-    function getActionButton(order, finalAmount) {
+    function getActionButton(order) {
         if (order.status === 'PAID') {
-            return `
-            <button class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="deliveryProcess('${order.orderId}')">
-                🚚 배송 시작
-            </button>
-        `;
+            return `<button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="deliveryProcess('${order.orderId}')">배송 시작</button>`;
         }
-
         if (order.status === 'SHIPPED') {
-            return `
-            <button class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="deliveryProcess('${order.orderId}')">
-                📦 배송 완료
-            </button>
-        `;
+            return `<button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="deliveryProcess('${order.orderId}')">배송 완료</button>`;
         }
-
-        return `<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>`;
+        return '<span style="color:var(--text-secondary);">-</span>';
     }
 
-    async function deliveryProcess(orderId){
+    async function deliveryProcess(orderId) {
         try {
-            await makeApiRequest('process-delivery', {
-                pathParams: orderId
-            });
-
+            await makeApiRequest('process-delivery', { pathParams: orderId });
             showNotification('업데이트 성공!', 'success');
             await loadOrders();
         } catch (error) {
-            showNotification('업데이트 실패!', 'success');
-            console.error('Failed to confirm payment:', error);
+            showNotification('업데이트 실패!', 'danger');
         }
     }
 
-    // 주문 결제하기
-    async function payOrder(orderId, totalAmount) {
-        if (!currentUser) {
-            showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
-            return;
-        }
+    function getStatusStyle(status) {
+        const s = {
+            'PENDING': 'background:#FFF8E1; color:#b8860b; border:1px solid #FFD700;',
+            'PAID': 'background:#fff0f5; color:#c4446b; border:1px solid #e75480;',
+            'CANCELLED': 'background:#f5f5f5; color:#111; border:1px solid #111;',
+            'SHIPPED': 'background:#f0f0f0; color:#333; border:1px solid #888;',
+            'DELIVERED': 'background:#111; color:#FFD700; border:1px solid #FFD700;',
+            'PURCHASE_CONFIRMED': 'background:#111; color:#FFD700; border:1px solid #FFD700;'
+        };
+        return s[status] || 'background:#f5f5f5; color:#333;';
+    }
 
-        // 해당 주문 찾기
-        const order = orders.find(o => o.orderId === orderId);
-        if (!order) {
-            showNotification('⚠️ 주문을 찾을 수 없습니다', 'error');
-            return;
-        }
+    function getStatusText(status) {
+        const t = {
+            'PENDING': '결제 대기', 'PAID': '결제 완료', 'CANCELLED': '취소됨',
+            'SHIPPED': '배송중', 'DELIVERED': '배송 완료', 'PURCHASE_CONFIRMED': '구매 확정'
+        };
+        return t[status] || status;
+    }
+
+    // ── 멤버십 정책 ──
+    async function loadMemberships() {
+        const loadingEl = document.getElementById('membership-loading');
+        const containerEl = document.getElementById('membership-container');
+        const gridEl = document.getElementById('membership-grid');
 
         try {
-            const paymentData = {
-                orderId: orderId,
-                orderName: `주문 ${order.orderNumber}`,  // 주문 번호로 표시
-                totalAmount: totalAmount,
-                currency: 'KRW',
-                payMethod: 'CARD',
-                customer: {
-                    customerId: currentUser.customerUid,  // PortOne에 전달할 고객 UID
-                    fullName: currentUser.name,
-                    phoneNumber: currentUser.phone || '01012345678',  // KG 이니시스 필수
-                    email: currentUser.email
-                }
+            const config = await getConfig();
+            const baseUrl = config.api.baseUrl;
+            const res = await fetch(baseUrl + '/api/memberships', {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const memberships = await res.json();
+
+            loadingEl.style.display = 'none';
+            containerEl.style.display = 'block';
+
+            const gradeInfo = {
+                'NORMAL': { label: 'NORMAL', icon: '★' },
+                'VIP': { label: 'VIP', icon: '★★' },
+                'VVIP': { label: 'VVIP', icon: '★★★' }
             };
 
-            const result = await openPortOnePayment(paymentData);
+            gridEl.innerHTML = memberships.map(m => {
+                const info = gradeInfo[m.membershipCode] || { label: m.membershipCode, icon: '★' };
+                const ratePercent = (parseFloat(m.earnRate) * 100).toFixed(1);
+                return `
+                    <div class="membership-card">
+                        <div style="font-size:1.5rem; margin-bottom:0.3rem;">${info.icon}</div>
+                        <div class="grade-name">${info.label}</div>
+                        <div class="grade-rate">${ratePercent}%</div>
+                        <div style="color:var(--text-secondary); font-size:0.8rem;">포인트 적립률</div>
+                        <div class="grade-threshold">최소 누적 결제: ₩${m.minTotalPaidAmount.toLocaleString()}</div>
+                    </div>`;
+            }).join('');
+        } catch (error) {
+            loadingEl.style.display = 'none';
+            containerEl.style.display = 'block';
+            gridEl.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-secondary); grid-column:1/-1;">멤버십 데이터가 없습니다.</div>';
+        }
+    }
 
-            if (result.paymentId) {
-                // 결제 완료 후 모드 B에 자동 입력
-                document.getElementById('manual-payment-id').value = result.paymentId;
+    // ── 상품 이미지 업로드 ──
+    const dropzone = document.getElementById('upload-dropzone');
 
-                showNotification('💳 결제 완료! 아래에서 결제 확정/취소를 테스트할 수 있습니다.', 'success');
+    document.addEventListener('DOMContentLoaded', () => {
+        const dz = document.getElementById('upload-dropzone');
+        if (dz) {
+            dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+            dz.addEventListener('drop', e => {
+                e.preventDefault();
+                dz.classList.remove('dragover');
+                addFiles(e.dataTransfer.files);
+            });
+        }
+    });
 
-                // 주문 목록 새로고침
-                await loadOrders();
+    function handleFileSelect(e) {
+        addFiles(e.target.files);
+        e.target.value = '';
+    }
+
+    function addFiles(fileList) {
+        for (const f of fileList) {
+            if (f.type.startsWith('image/')) uploadFiles.push(f);
+        }
+        renderUploadPreview();
+    }
+
+    function removeFile(idx) {
+        uploadFiles.splice(idx, 1);
+        renderUploadPreview();
+    }
+
+    function renderUploadPreview() {
+        const el = document.getElementById('upload-preview');
+        el.innerHTML = uploadFiles.map((f, i) => {
+            const url = URL.createObjectURL(f);
+            return `
+                <div class="upload-preview-item">
+                    <img src="${url}" alt="${f.name}">
+                    <button class="remove-btn" onclick="removeFile(${i})">✕</button>
+                    ${i === 0 ? '<div class="thumb-badge">THUMBNAIL</div>' : ''}
+                </div>`;
+        }).join('');
+    }
+
+    async function uploadImages() {
+        const productId = document.getElementById('upload-product-id').value.trim();
+        if (!productId) { showNotification('상품 ID를 입력해주세요', 'warning'); return; }
+        if (uploadFiles.length === 0) { showNotification('이미지를 선택해주세요', 'warning'); return; }
+
+        const formData = new FormData();
+        formData.append('productId', productId);
+
+        uploadFiles.forEach((file, i) => {
+            formData.append(`uploadProductImages[${i}].file`, file);
+            formData.append(`uploadProductImages[${i}].order`, i + 1);
+            formData.append(`uploadProductImages[${i}].isThumbnail`, i === 0);
+        });
+
+        try {
+            const config = await getConfig();
+            const baseUrl = config.api.baseUrl;
+            const token = getToken();
+            const res = await fetch(baseUrl + '/api/products/images', {
+                method: 'POST',
+                credentials: 'include',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: formData
+            });
+
+            if (!res.ok) throw new Error('업로드 실패');
+            showNotification('이미지 업로드 성공!', 'success');
+            uploadFiles = [];
+            renderUploadPreview();
+            document.getElementById('upload-product-id').value = '';
+        } catch (error) {
+            showNotification('이미지 업로드 실패: ' + error.message, 'danger');
+        }
+    }
+
+    // ── 포인트 이력 ──
+    async function loadPointHistory() {
+        const loadingEl = document.getElementById('points-loading');
+        const containerEl = document.getElementById('points-container');
+        const emptyEl = document.getElementById('points-empty');
+
+        try {
+            const config = await getConfig();
+            const baseUrl = config.api.baseUrl;
+            const token = getToken();
+            const res = await fetch(baseUrl + '/api/users/me/points', {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
+            const history = await res.json();
+
+            loadingEl.style.display = 'none';
+
+            if (!history || history.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
             }
+
+            containerEl.style.display = 'block';
+            const tbody = document.getElementById('points-list-body');
+
+            const typeLabels = {
+                'EARN': '적립', 'USE': '사용', 'EXPIRE': '만료', 'CANCEL': '취소'
+            };
+
+            tbody.innerHTML = history.map(h => {
+                const typeClass = h.type === 'EARN' ? 'earn' : 'use';
+                const sign = h.type === 'EARN' ? '+' : '-';
+                const label = typeLabels[h.type] || h.type;
+                const expiresAt = h.expiresAt ? new Date(h.expiresAt).toLocaleDateString('ko-KR') : '-';
+                const createdAt = h.createdAt ? new Date(h.createdAt).toLocaleDateString('ko-KR') : '-';
+
+                return `<tr>
+                    <td style="font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${h.pointTransactionId}</td>
+                    <td><span class="point-type ${typeClass}">${label}</span></td>
+                    <td style="font-weight:700;">${sign}${Math.abs(h.points).toLocaleString()}P</td>
+                    <td>${expiresAt}</td>
+                    <td>${createdAt}</td>
+                </tr>`;
+            }).join('');
         } catch (error) {
-            console.error('Payment failed:', error);
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            emptyEl.textContent = '포인트 데이터가 없습니다.';
         }
     }
 
-    // 모드 B: 수동 결제 확정
-    async function manualConfirmPayment() {
-        const paymentId = document.getElementById('manual-payment-id').value.trim();
-
-        if (!paymentId) {
-            showNotification('⚠️ 결제 ID를 입력해주세요', 'warning');
-            return;
-        }
-
-        try {
-            await confirmPaymentTemplate(paymentId);
-            await loadOrders(); // 주문 목록 새로고침
-        } catch (error) {
-            console.error('Failed to confirm payment:', error);
-        }
-    }
-
-    // 모드 B: 수동 결제 취소
-    async function manualCancelPayment() {
-        const paymentId = document.getElementById('manual-payment-id').value.trim();
-
-        if (!paymentId) {
-            showNotification('⚠️ 결제 ID를 입력해주세요', 'warning');
-            return;
-        }
-
-        if (!confirm('정말 이 결제를 취소하시겠습니까?')) {
-            return;
-        }
-
-        try {
-            await cancelPaymentTemplate(paymentId, 'Customer request');
-            await loadOrders(); // 주문 목록 새로고침
-        } catch (error) {
-            console.error('Failed to cancel payment:', error);
-        }
-    }
-
-    // 상태 스타일 반환
-    function getStatusStyle(status) {
-        const styles = {
-            'PENDING': 'background: #FEF3C7; color: #92400E;',
-            'PAID': 'background: #D1FAE5; color: #065F46;',
-            'CANCELLED': 'background: #FEE2E2; color: #991B1B;',
-            'SHIPPED': 'background: #DBEAFE; color: #1E40AF;',
-            'DELIVERED': 'background: #E0E7FF; color: #3730A3;',
-            'PURCHASE_CONFIRMED': 'background: #E0E7FF; color: #3730A3;'
-        };
-        return styles[status] || 'background: #F3F4F6; color: #374151;';
-    }
-
-    // 상태 텍스트 반환
-    function getStatusText(status) {
-        const texts = {
-            'PENDING': '결제 대기',
-            'PAID': '결제 완료',
-            'CANCELLED': '취소됨',
-            'SHIPPED': '배송중',
-            'DELIVERED': '배송 완료',
-            'PURCHASE_CONFIRMED': '구매 확정(포인트 지급 완료)'
-        };
-        return texts[status] || status;
+    // ── API 패널 토글 ──
+    function toggleApiPanel() {
+        document.getElementById('api-mini-panel').classList.toggle('open');
     }
 </script>
 </body>

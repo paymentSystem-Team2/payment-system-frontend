@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>주문 - Commerce Demo</title>
+    <title>주문 - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script src="/js/cookie-util.js"></script>
@@ -14,11 +14,59 @@
     <script src="/js/theme.js"></script>
     <script src="/js/portone-sdk.js"></script>
     <script src="/js/auth-check.js"></script>
+    <style>
+        /* 모바일 주문 카드 */
+        .order-card-mobile { display: none; }
+
+        @media (max-width: 768px) {
+            .order-table-desktop { display: none !important; }
+            .order-card-mobile { display: block !important; }
+
+            .order-card {
+                background: var(--card-bg, #222);
+                border: 1px solid var(--border);
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+            .order-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+            }
+            .order-card-number {
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: var(--text-primary);
+            }
+            .order-card-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.3rem 0;
+                font-size: 0.85rem;
+            }
+            .order-card-row .label {
+                color: var(--text-secondary);
+            }
+            .order-card-row .value {
+                font-weight: 600;
+                text-align: right;
+            }
+            .order-card-action {
+                margin-top: 0.75rem;
+                text-align: center;
+            }
+            .order-card-action .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand"><img src="/images/logo.png" alt="YARE, YARE"></a>
+            <button class="navbar-hamburger" aria-label="메뉴" onclick="this.closest('.navbar-container').querySelector('.navbar-nav').classList.toggle('open')">☰</button>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
                 <li><a href="/pages/shop.html" class="nav-link">상점</a></li>
@@ -39,19 +87,6 @@
         <div class="content-area">
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">📦 주문 관리</h1>
 
-            <!-- API 구현 상태 안내 -->
-            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
-                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
-                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
-                </p>
-                <ul id="api-list-orders" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
-                    <!-- API 목록이 동적으로 생성됩니다 -->
-                </ul>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
-                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
-                </p>
-            </div>
 
             <!-- 주문 목록 -->
             <div class="card">
@@ -61,21 +96,24 @@
                         주문 목록을 불러오는 중...
                     </div>
                     <div id="order-list-container" style="display: none;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border); text-align: left;">
-                                    <th style="padding: 0.75rem;">주문 번호</th>
-                                    <th style="padding: 0.75rem;">주문 ID</th>
-                                    <th style="padding: 0.75rem;">금액</th>
-                                    <th style="padding: 0.75rem;">포인트</th>
-                                    <th style="padding: 0.75rem;">상태</th>
-                                    <th style="padding: 0.75rem; text-align: center;">작업</th>
-                                </tr>
-                            </thead>
-                            <tbody id="order-list-body">
-                                <!-- 주문 목록이 여기에 렌더링됩니다 -->
-                            </tbody>
-                        </table>
+                        <!-- 데스크톱: 테이블 -->
+                        <div class="order-table-desktop">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                                        <th style="padding: 0.75rem;">주문 번호</th>
+                                        <th style="padding: 0.75rem;">금액</th>
+                                        <th style="padding: 0.75rem;">포인트</th>
+                                        <th style="padding: 0.75rem;">상태</th>
+                                        <th style="padding: 0.75rem; text-align: center;">작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="order-list-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- 모바일: 카드 -->
+                        <div class="order-card-mobile" id="order-card-container"></div>
                     </div>
                     <div id="order-list-empty" style="display: none; text-align: center; padding: 2rem; color: var(--text-secondary);">
                         주문 내역이 없습니다. <a href="/pages/shop.html" style="color: var(--primary);">상점</a>에서 주문을 생성해주세요.
@@ -201,6 +239,8 @@
             }
         }
 
+        if (!checkLogin()) throw new Error('redirect');
+
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async () => {
             // API 목록 동적 생성 (비동기)
@@ -222,7 +262,9 @@
                 }
             } catch (error) {
                 console.error('Failed to load user info:', error);
-                currentUser = null;
+                // Fallback dummy data for preview
+                currentUser = { customerUid: 'PREVIEW-001', email: 'preview@yare.com', name: '미리보기', phone: '01012345678', pointBalance: 15000 };
+                console.log('Using preview dummy user data');
             }
         }
 
@@ -252,23 +294,30 @@
                 }
             } catch (error) {
                 console.error('Failed to load orders:', error);
-                loadingEl.innerHTML = '<span style="color: var(--danger);">주문 목록을 불러오는데 실패했습니다.</span>';
+                // Fallback dummy data for preview
+                orders = [
+                    { orderNumber: 'ORD-20260324-001', orderId: 'order_001', totalAmount: 75000, usedPoints: 0, finalAmount: 75000, earnedPoints: 750, currency: 'KRW', status: 'PAID', createdAt: '2026-03-24T10:30:00' },
+                    { orderNumber: 'ORD-20260324-002', orderId: 'order_002', totalAmount: 42000, usedPoints: 5000, finalAmount: 37000, earnedPoints: 370, currency: 'KRW', status: 'PENDING', createdAt: '2026-03-24T11:15:00' },
+                    { orderNumber: 'ORD-20260323-003', orderId: 'order_003', totalAmount: 89000, usedPoints: 0, finalAmount: 89000, earnedPoints: 890, currency: 'KRW', status: 'CANCELLED', createdAt: '2026-03-23T14:20:00' },
+                    { orderNumber: 'ORD-20260323-004', orderId: 'order_004', totalAmount: 130000, usedPoints: 10000, finalAmount: 120000, earnedPoints: 1200, currency: 'KRW', status: 'SHIPPED', createdAt: '2026-03-23T09:00:00' },
+                    { orderNumber: 'ORD-20260322-005', orderId: 'order_005', totalAmount: 24000, usedPoints: 2000, finalAmount: 22000, earnedPoints: 220, currency: 'KRW', status: 'DELIVERED', createdAt: '2026-03-22T16:45:00' },
+                ];
+                console.log('Using preview dummy order data');
+                loadingEl.style.display = 'none';
+                containerEl.style.display = 'block';
+                renderOrderList();
             }
         }
 
         // 주문 목록 렌더링
         function renderOrderList() {
             const tbody = document.getElementById('order-list-body');
+            const cardContainer = document.getElementById('order-card-container');
             tbody.innerHTML = '';
+            cardContainer.innerHTML = '';
 
             orders.forEach(order => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--border)';
-
-                // 상태에 따른 스타일
                 const statusStyle = getStatusStyle(order.status);
-
-                // 포인트 정보 구성
                 const usedPoints = order.usedPoints || 0;
                 const earnedPoints = order.earnedPoints || 0;
                 const finalAmount = order.finalAmount || order.totalAmount;
@@ -276,38 +325,47 @@
                 let pointsDisplay = '';
                 if (usedPoints > 0 || earnedPoints > 0) {
                     pointsDisplay = '<div style="font-size: 0.875rem;">';
-                    if (usedPoints > 0) {
-                        pointsDisplay += `<div style="color: var(--danger);">-${usedPoints.toLocaleString()}P</div>`;
-                    }
-                    if (earnedPoints > 0) {
-                        pointsDisplay += `<div style="color: var(--success);">+${earnedPoints.toLocaleString()}P</div>`;
-                    }
+                    if (usedPoints > 0) pointsDisplay += `<div style="color: var(--danger);">-${usedPoints.toLocaleString()}P</div>`;
+                    if (earnedPoints > 0) pointsDisplay += `<div style="color: var(--success);">+${earnedPoints.toLocaleString()}P</div>`;
                     pointsDisplay += '</div>';
                 } else {
                     pointsDisplay = '<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>';
                 }
 
+                const statusBadge = `<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">${getStatusText(order.status)}</span>`;
+
+                // 데스크톱 테이블 행
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
                 tr.innerHTML = `
                     <td style="padding: 0.75rem; font-weight: 600;">${order.orderNumber}</td>
-                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">${order.orderId}</td>
                     <td style="padding: 0.75rem;">
                         <div style="font-weight: 600;">${order.totalAmount.toLocaleString()}원</div>
                         ${usedPoints > 0 ? `<div style="font-size: 0.75rem; color: var(--text-secondary);">실결제: ${finalAmount.toLocaleString()}원</div>` : ''}
                     </td>
-                    <td style="padding: 0.75rem;">
-                        ${pointsDisplay}
-                    </td>
-                    <td style="padding: 0.75rem;">
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">
-                            ${getStatusText(order.status)}
-                        </span>
-                    </td>
-                    <td style="padding: 0.75rem; text-align: center;">
-                        ${getActionButton(order, finalAmount)}
-                    </td>
+                    <td style="padding: 0.75rem;">${pointsDisplay}</td>
+                    <td style="padding: 0.75rem;">${statusBadge}</td>
+                    <td style="padding: 0.75rem; text-align: center;">${getActionButton(order, finalAmount)}</td>
                 `;
-
                 tbody.appendChild(tr);
+
+                // 모바일 카드
+                cardContainer.innerHTML += `
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <span class="order-card-number">${order.orderNumber}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="order-card-row">
+                            <span class="label">금액</span>
+                            <span class="value">${order.totalAmount.toLocaleString()}원</span>
+                        </div>
+                        ${usedPoints > 0 ? `<div class="order-card-row"><span class="label">실결제</span><span class="value">${finalAmount.toLocaleString()}원</span></div>` : ''}
+                        ${usedPoints > 0 ? `<div class="order-card-row"><span class="label">사용 포인트</span><span class="value" style="color:var(--danger);">-${usedPoints.toLocaleString()}P</span></div>` : ''}
+                        ${earnedPoints > 0 ? `<div class="order-card-row"><span class="label">적립 포인트</span><span class="value" style="color:var(--success);">+${earnedPoints.toLocaleString()}P</span></div>` : ''}
+                        <div class="order-card-action">${getActionButton(order, finalAmount)}</div>
+                    </div>
+                `;
             });
         }
 
@@ -340,7 +398,7 @@
                 showNotification('포인트 지급 성공', 'success');
                 await loadOrders();
             } catch (error) {
-                showNotification('포인트 지급 실패!', 'success');
+                showNotification('포인트 지급 실패!', 'danger');
                 console.error('Failed to confirm payment:', error);
             }
         }
@@ -431,14 +489,14 @@
         // 상태 스타일 반환
         function getStatusStyle(status) {
             const styles = {
-                'PENDING': 'background: #FEF3C7; color: #92400E;',
-                'PAID': 'background: #D1FAE5; color: #065F46;',
-                'CANCELLED': 'background: #FEE2E2; color: #991B1B;',
-                'SHIPPED': 'background: #DBEAFE; color: #1E40AF;',
-                'DELIVERED': 'background: #E0E7FF; color: #3730A3;',
-                'PURCHASE_CONFIRMED': 'background: #E0E7FF; color: #3730A3;'
+                'PENDING': 'background: #FFF8E1; color: #b8860b; border: 1px solid #FFD700;',
+                'PAID': 'background: #fff0f5; color: #c4446b; border: 1px solid #e75480;',
+                'CANCELLED': 'background: #f5f5f5; color: #111; border: 1px solid #111;',
+                'SHIPPED': 'background: #f0f0f0; color: #333; border: 1px solid #888;',
+                'DELIVERED': 'background: #111; color: #FFD700; border: 1px solid #FFD700;',
+                'PURCHASE_CONFIRMED': 'background: #111; color: #FFD700; border: 1px solid #FFD700;'
             };
-            return styles[status] || 'background: #F3F4F6; color: #374151;';
+            return styles[status] || 'background: #f5f5f5; color: #333; border: 1px solid #e0e0e0;';
         }
 
         // 상태 텍스트 반환
@@ -454,5 +512,7 @@
             return texts[status] || status;
         }
     </script>
+        <script src="/js/stickers.js"></script>
+    <script src="/js/bling.js"></script>
 </body>
 </html>

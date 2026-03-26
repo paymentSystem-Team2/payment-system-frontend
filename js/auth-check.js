@@ -17,11 +17,11 @@ function checkAuthentication() {
         return;
     }
 
-    // 토큰이 없으면 로그인 페이지로 이동
-    if (!token) {
-        window.location.href = '/pages/login.html';
-        return;
-    }
+    // 토큰이 없어도 페이지 열람 허용 (평가용)
+    // if (!token) {
+    //     window.location.href = '/pages/login.html';
+    //     return;
+    // }
 
     // 사용자 정보 표시
     displayUserInfo();
@@ -64,7 +64,45 @@ function handleLogout() {
     window.location.href = '/pages/login.html';
 }
 
-// 페이지 로드 시 인증 체크
+/**
+ * 모바일 햄버거 메뉴 초기화
+ */
+function initHamburgerMenu() {
+    const container = document.querySelector('.navbar-container');
+    const nav = document.querySelector('.navbar-nav');
+    if (!container || !nav) return;
+
+    // 이미 추가된 경우 스킵
+    if (container.querySelector('.navbar-hamburger')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'navbar-hamburger';
+    btn.setAttribute('aria-label', '메뉴');
+    btn.innerHTML = '☰';
+    btn.addEventListener('click', function() {
+        nav.classList.toggle('open');
+        btn.innerHTML = nav.classList.contains('open') ? '✕' : '☰';
+    });
+
+    // navbar-brand 바로 뒤에 삽입
+    const brand = container.querySelector('.navbar-brand');
+    if (brand && brand.nextSibling) {
+        container.insertBefore(btn, brand.nextSibling);
+    } else {
+        container.appendChild(btn);
+    }
+
+    // 메뉴 항목 클릭 시 메뉴 닫기
+    nav.querySelectorAll('.nav-link').forEach(function(link) {
+        link.addEventListener('click', function() {
+            nav.classList.remove('open');
+            btn.innerHTML = '☰';
+        });
+    });
+}
+
+// 페이지 로드 시 인증 체크 + 햄버거 메뉴
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthentication();
+    initHamburgerMenu();
 });

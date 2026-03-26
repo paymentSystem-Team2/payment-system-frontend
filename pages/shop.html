@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>상점 - Commerce Demo</title>
+    <title>상점 - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script src="/js/cookie-util.js"></script>
@@ -14,11 +14,477 @@
     <script src="/js/theme.js"></script>
     <script src="/js/portone-sdk.js"></script>
     <script src="/js/auth-check.js"></script>
+    <style>
+        /* ── Product Grid ── */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .shop-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+            .shop-grid { grid-template-columns: 1fr; }
+        }
+
+        .shop-page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 0.5rem;
+            margin: 0 0.2rem;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-page-btn:hover { border-color: var(--hot-pink, var(--primary)); color: var(--hot-pink, var(--primary)); }
+        .shop-page-btn.active { background: var(--hot-pink, var(--primary)); color: #fff; border-color: var(--hot-pink, var(--primary)); }
+        .shop-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .inline-cart-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .inline-cart-row .item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inline-cart-qty-control { display: flex; align-items: center; gap: 0.25rem; }
+        .inline-cart-qty-btn {
+            width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg-secondary, #1a1a1a);
+            color: var(--text-primary, #fff); cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .inline-cart-qty-btn:hover { border-color: var(--hot-pink, var(--primary)); color: var(--hot-pink, var(--primary)); }
+        .inline-cart-row .item-qty { width: 28px; text-align: center; color: var(--text-secondary); font-weight: 600; }
+        .inline-cart-row .item-subtotal { width: 100px; text-align: right; font-weight: 700; }
+        .inline-cart-remove-btn {
+            width: 26px; height: 26px; border: 1px solid transparent; background: none;
+            color: var(--text-secondary); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center;
+            margin-left: 0.5rem; transition: all 0.15s;
+        }
+        .inline-cart-remove-btn:hover { color: var(--danger, #ff4466); border-color: var(--danger, #ff4466); }
+
+        /* ── Product Card ── */
+        .shop-product-card {
+            background: var(--black-card, #222);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.25s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shop-product-card:hover {
+            border-color: var(--hot-pink, var(--primary));
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.25), 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        /* ── Image Slideshow ── */
+        .product-slideshow {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+            background: var(--bg-tertiary);
+        }
+
+        .product-slideshow .slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .product-slideshow .slides img {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-slideshow .slide-dots {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        .product-slideshow .slide-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: all 0.2s;
+        }
+
+        .product-slideshow .slide-dot.active {
+            background: var(--hot-pink, var(--primary));
+            box-shadow: 0 0 6px var(--hot-pink, var(--primary));
+        }
+
+        .product-slideshow .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .product-card-info {
+            padding: 1rem;
+        }
+
+        .product-card-info h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-card-info .product-price {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--hot-pink, var(--primary));
+        }
+
+        .product-card-info .product-stock {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .product-card-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #111;
+            color: #FFD700;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            z-index: 2;
+            letter-spacing: 0.05em;
+            border: 2px solid #FFD700;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        /* ── Modal Image Gallery ── */
+        .modal-gallery {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            background: var(--bg-tertiary);
+        }
+
+        .modal-gallery .slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.4s ease;
+        }
+
+        .modal-gallery .slides img {
+            min-width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--bg-tertiary);
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .gallery-nav:hover { background: var(--hot-pink, var(--primary)); }
+        .gallery-nav.prev { left: 8px; }
+        .gallery-nav.next { right: 8px; }
+
+        .gallery-dots {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .gallery-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gallery-dot.active {
+            background: var(--hot-pink, var(--primary));
+            box-shadow: 0 0 8px var(--hot-pink, var(--primary));
+        }
+
+        .modal-gallery .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-detail {
+            padding: 1.5rem;
+        }
+
+        .modal-detail h2 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-detail .modal-price {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--hot-pink, var(--primary));
+            margin-bottom: 1rem;
+        }
+
+        .modal-detail .modal-desc {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .modal-detail .modal-stock {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .modal-qty-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-qty-row label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 40px;
+        }
+
+        .modal-qty-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-qty-btn {
+            width: 38px;
+            height: 38px;
+            border: 2px solid var(--hot-pink, var(--primary));
+            background: transparent;
+            color: var(--hot-pink, var(--primary));
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-qty-btn:hover {
+            background: var(--hot-pink, var(--primary));
+            color: white;
+        }
+
+        .modal-qty-input {
+            width: 60px;
+            height: 38px;
+            text-align: center;
+            border: 2px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .modal-add-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+        }
+
+        /* ── Floating Cart (mobile only) ── */
+        .floating-cart { display: none; position: fixed; bottom: 24px; right: 24px; z-index: 1500; }
+        .cart-btn {
+            width: 56px; height: 56px; border-radius: 50%; border: none;
+            background: var(--hot-pink, var(--primary)); color: #fff; font-size: 1.4rem;
+            cursor: pointer; position: relative;
+            box-shadow: 0 4px 20px rgba(255,20,147,0.4);
+        }
+        .cart-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: var(--gold, #ffd700); color: #000;
+            width: 22px; height: 22px; border-radius: 50%;
+            font-size: 0.7rem; font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── Cart Drawer (mobile only) ── */
+        .cart-drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1800; }
+        .cart-drawer-overlay.open { display: block; }
+        .cart-drawer {
+            position: fixed; top: 0; right: -100%; width: 85vw; max-width: 360px; height: 100vh;
+            background: var(--bg-primary); border-left: 2px solid var(--border);
+            z-index: 1900; transition: right 0.3s ease; display: flex; flex-direction: column;
+        }
+        .cart-drawer.open { right: 0; }
+        .cart-drawer-header { padding: 1rem; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .cart-drawer-header h3 { font-size: 1.1rem; font-weight: 900; text-transform: uppercase; }
+        .cart-drawer-close {
+            width: 32px; height: 32px; background: var(--bg-tertiary); border: 2px solid var(--border);
+            color: var(--text-primary); font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cart-drawer-close:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+        .cart-drawer-body { flex: 1; overflow-y: auto; padding: 0.75rem; }
+        .cart-drawer-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+        .cart-drawer-item img { width: 48px; height: 48px; object-fit: cover; border: 1px solid var(--border); }
+        .cart-drawer-item-info { flex: 1; min-width: 0; }
+        .cart-drawer-item-info .item-name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cart-drawer-item-info .item-price { font-size: 0.8rem; color: var(--text-secondary); }
+        .cart-drawer-item-actions { display: flex; align-items: center; gap: 0.25rem; }
+        .cart-drawer-item-actions button {
+            width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg-tertiary);
+            color: var(--text-primary); cursor: pointer; font-weight: 700; font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cart-drawer-item-actions button:hover { border-color: var(--hot-pink, var(--primary)); color: var(--hot-pink, var(--primary)); }
+        .cart-drawer-item-actions span { min-width: 20px; text-align: center; font-weight: 700; font-size: 0.85rem; }
+        .cart-drawer-item-remove { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; padding: 0.2rem; }
+        .cart-drawer-item-remove:hover { color: var(--danger); }
+        .cart-drawer-empty { text-align: center; padding: 2rem 1rem; color: var(--text-secondary); }
+        .cart-drawer-footer { padding: 1rem; border-top: 2px solid var(--border); }
+        .cart-drawer-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 900; margin-bottom: 0.75rem; color: var(--hot-pink, var(--primary)); }
+
+        /* ── Shop Responsive ── */
+        @media (max-width: 768px) {
+            /* 모바일: 인라인 장바구니 숨기고 플로팅 버튼 표시 */
+            #inline-cart { display: none !important; }
+            .floating-cart { display: block; }
+
+            .modal-overlay { padding: 1rem; }
+            .modal-content { max-width: 100%; }
+            .modal-gallery { height: 260px; }
+            .modal-detail h2 { font-size: 1.2rem; }
+            .modal-detail .modal-price { font-size: 1.4rem; }
+        }
+
+        @media (max-width: 480px) {
+            .shop-grid { gap: 1rem; }
+            .product-slideshow { height: 180px; }
+            .product-card-info { padding: 0.75rem; }
+            .product-card-info h3 { font-size: 0.9rem; }
+            .product-card-info .product-price { font-size: 1rem; }
+
+            .modal-gallery { height: 200px; }
+            .modal-detail { padding: 1rem; }
+            .modal-qty-btn { width: 32px; height: 32px; }
+            .modal-qty-input { width: 50px; height: 32px; }
+
+            .shop-page-btn { min-width: 30px; height: 30px; font-size: 0.75rem; }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand"><img src="/images/logo.png" alt="YARE, YARE"></a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
                 <li><a href="/pages/shop.html" class="nav-link active">상점</a></li>
@@ -30,44 +496,33 @@
             </ul>
             <div class="navbar-actions">
                 <div class="config-badge-container"></div>
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
             </div>
         </div>
     </nav>
 
     <div class="main-container">
         <div class="content-area">
-            <h1 style="font-size: 2rem; margin-bottom: 2rem;">🛒 Product Shop</h1>
+            <h1 style="font-size: 1.8rem; margin-bottom: 1.5rem;">★ SHOP</h1>
 
-            <!-- API 구현 상태 안내 -->
-            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
-                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
-                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
-                </p>
-                <ul id="api-list-shop" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
-                    <!-- API 목록이 동적으로 생성됩니다 -->
-                </ul>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
-                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
-                </p>
+
+            <div id="product-loading" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                상품을 불러오는 중...
             </div>
 
-            <div class="card-grid" id="product-list">
-                <!-- Products will be rendered here -->
-            </div>
+            <div class="shop-grid" id="product-list" style="display: none;"></div>
 
-            <div class="cart-summary" style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1rem;">🛍️ Cart Summary</h3>
-                <div id="cart-items"></div>
-                <div class="cart-total">
-                    <span>총 금액:</span>
-                    <span id="cart-total">₩0</span>
+            <!-- Pagination -->
+            <div id="shop-pagination" style="display: none; text-align: center; margin-top: 1.5rem;"></div>
+
+            <!-- Inline Cart Summary -->
+            <div id="inline-cart" style="margin-top: 2rem; border: 2px solid var(--border); background: var(--black-card, #222); padding: 1.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 2px dashed var(--border); padding-bottom: 0.75rem;">★ 장바구니</h3>
+                <div id="inline-cart-items" style="margin-bottom: 1rem;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 900; color: var(--hot-pink, var(--primary)); padding-top: 0.75rem; border-top: 2px solid var(--border);">
+                    <span>합계</span>
+                    <span id="inline-cart-total">₩0</span>
                 </div>
-
-                <button class="btn btn-primary" onclick="createOrder()" style="width: 100%; margin-top: 1rem;">
-                    📦 주문 생성
-                </button>
+                <button class="btn btn-primary" onclick="createOrder()" style="width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1rem;">주문하기</button>
             </div>
         </div>
 
@@ -87,238 +542,654 @@
         </div>
     </div>
 
+    <!-- Cart Drawer (mobile) -->
+    <div class="cart-drawer-overlay" id="cart-overlay" onclick="closeCart()"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h3>장바구니</h3>
+            <button class="cart-drawer-close" onclick="closeCart()">&times;</button>
+        </div>
+        <div class="cart-drawer-body" id="cart-body"></div>
+        <div class="cart-drawer-footer">
+            <div class="cart-drawer-total">
+                <span>합계</span>
+                <span id="cart-total-price">₩0</span>
+            </div>
+            <button class="btn btn-primary" onclick="createOrder()" style="width:100%;padding:0.75rem;font-size:1rem;">주문하기</button>
+        </div>
+    </div>
+
+    <!-- Floating Cart Button (mobile) -->
+    <div class="floating-cart">
+        <button class="cart-btn" onclick="openCart()">
+            🛒
+            <span class="cart-badge" id="cart-count">0</span>
+        </button>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div class="modal-gallery" id="modal-gallery"></div>
+            <div class="modal-detail" id="modal-detail"></div>
+        </div>
+    </div>
+
+
     <script>
+        if (!checkLogin()) throw new Error('redirect');
+
         // 참고용: API 응답 예시 구조
         // [
-        //     { id: 'PROD001', name: '프리미엄 무선 이어폰', price: 89000, stock: 50 },
-        //     { id: 'PROD002', name: '스마트 워치', price: 299000, stock: 30 },
+        //     { id: 1, name: '상품명', price: 10000, stock: 50, description: '설명', images: ['url1','url2'] },
         //     ...
         // ]
 
         let products = [];
-        const cart = {};
-
-        // 현재 사용자 정보 (서버에서 로드)
+        let cart = {};
         let currentUser = null;
 
-        // 페이지 로드 시 사용자 정보 가져오기
+        // ── Cookie Cart Persistence ──
+        function saveCartToCookie() {
+            setCookie('yare_cart', JSON.stringify(cart), 7);
+        }
+
+        function loadCartFromCookie() {
+            const saved = getCookie('yare_cart');
+            if (saved) {
+                try { cart = JSON.parse(saved); } catch(e) { cart = {}; }
+            }
+        }
+
+        // ── Dummy Data (API 미구현 시 사용) ──
+        const dummyProducts = [
+            {
+                id: 1, name: '로즈 퍼퓸 핸드크림', price: 18000, stock: 45,
+                description: '다마스크 로즈 오일이 함유된 프리미엄 핸드크림. 촉촉한 보습감과 은은한 장미향이 하루종일 지속됩니다.',
+                images: [
+                    'https://picsum.photos/seed/rose-cream1/400/400',
+                    'https://picsum.photos/seed/rose-cream2/400/400',
+                    'https://picsum.photos/seed/rose-cream3/400/400'
+                ]
+            },
+            {
+                id: 2, name: '글리터 아이섀도우 팔레트', price: 42000, stock: 23,
+                description: '12색 글리터 & 매트 조합 아이섀도우 팔레트. 데일리부터 파티룩까지 다양하게 연출할 수 있습니다.',
+                images: [
+                    'https://picsum.photos/seed/eyeshadow1/400/400',
+                    'https://picsum.photos/seed/eyeshadow2/400/400'
+                ]
+            },
+            {
+                id: 3, name: '벨벳 틴트 립스틱', price: 15000, stock: 120,
+                description: '고발색 벨벳 텍스처 틴트. 가볍게 바르면 투명하게, 겹쳐 바르면 선명하게 발색됩니다.',
+                images: [
+                    'https://picsum.photos/seed/lipstick1/400/400',
+                    'https://picsum.photos/seed/lipstick2/400/400',
+                    'https://picsum.photos/seed/lipstick3/400/400'
+                ]
+            },
+            {
+                id: 4, name: '실크 스카프 (레오파드)', price: 89000, stock: 8,
+                description: '100% 실크 소재의 레오파드 패턴 스카프. 갸루 스타일의 포인트 아이템으로 완벽합니다.',
+                images: [
+                    'https://picsum.photos/seed/scarf1/400/400',
+                    'https://picsum.photos/seed/scarf2/400/400'
+                ]
+            },
+            {
+                id: 5, name: '크리스탈 헤어 클립 세트', price: 12000, stock: 67,
+                description: '반짝이는 크리스탈 장식 헤어 클립 5개 세트. 다양한 헤어 스타일링에 활용 가능.',
+                images: [
+                    'https://picsum.photos/seed/hairclip1/400/400'
+                ]
+            },
+            {
+                id: 6, name: '네일 스티커 컬렉션', price: 8500, stock: 200,
+                description: '셀프 네일아트를 위한 프리미엄 네일 스티커 20매. 별, 하트, 리본 등 키치한 디자인 모음.',
+                images: [
+                    'https://picsum.photos/seed/nail1/400/400',
+                    'https://picsum.photos/seed/nail2/400/400',
+                    'https://picsum.photos/seed/nail3/400/400'
+                ]
+            },
+            {
+                id: 7, name: '미니 크로스백 (핑크)', price: 55000, stock: 15,
+                description: '핑크 페이크 레더 미니 크로스백. 체인 스트랩과 골드 버클 포인트.',
+                images: [
+                    'https://picsum.photos/seed/bag1/400/400',
+                    'https://picsum.photos/seed/bag2/400/400'
+                ]
+            },
+            {
+                id: 8, name: '글로우 세럼 파운데이션', price: 32000, stock: 0,
+                description: '자연스러운 광채를 주는 세럼 타입 파운데이션. 피부에 밀착되어 하루종일 촉촉하게 유지됩니다.',
+                images: [
+                    'https://picsum.photos/seed/foundation1/400/400',
+                    'https://picsum.photos/seed/foundation2/400/400'
+                ]
+            },
+            {
+                id: 9, name: '하트 선글라스', price: 19000, stock: 35,
+                description: '러블리한 하트 프레임 선글라스. UV400 자외선 차단. 사진 찍을 때 포인트 아이템!',
+                images: [
+                    'https://picsum.photos/seed/sunglasses1/400/400',
+                    'https://picsum.photos/seed/sunglasses2/400/400'
+                ]
+            },
+            {
+                id: 10, name: '체리 보습 립밤', price: 6500, stock: 300,
+                description: '달콤한 체리향의 보습 립밤. 건조한 입술에 촉촉함을 더해줍니다.',
+                images: [
+                    'https://picsum.photos/seed/lipbalm1/400/400'
+                ]
+            },
+            {
+                id: 11, name: '퍼플 유니콘 텀블러', price: 24000, stock: 18,
+                description: '홀로그램 유니콘 패턴 스테인리스 텀블러 500ml. 보온보냉 12시간.',
+                images: [
+                    'https://picsum.photos/seed/tumbler1/400/400',
+                    'https://picsum.photos/seed/tumbler2/400/400',
+                    'https://picsum.photos/seed/tumbler3/400/400'
+                ]
+            },
+            {
+                id: 12, name: '리본 초커 목걸이', price: 11000, stock: 52,
+                description: '블랙 벨벳 리본 초커에 크리스탈 펜던트 장식. 갸루 & 고스 스타일에 딱!',
+                images: [
+                    'https://picsum.photos/seed/choker1/400/400',
+                    'https://picsum.photos/seed/choker2/400/400'
+                ]
+            }
+        ];
+
+        // ── Init ──
+        async function initShop() {
+            loadCartFromCookie();
+            await loadCurrentUser();
+            const apiLoaded = await loadProductsFromApi();
+            if (!apiLoaded) {
+                // API 미구현 시 더미 데이터 사용
+                products = dummyProducts;
+            }
+            renderProducts();
+            updateCartUI();
+        }
+
         async function loadCurrentUser() {
             try {
-                currentUser = await makeApiRequest('get-current-user', {
-                });
-
-                // YML 스키마 기반 자동 검증
+                currentUser = await makeApiRequest('get-current-user', {});
                 if (!validateApiResponse('get-current-user', currentUser)) {
                     throw new Error('API 응답 형식이 올바르지 않습니다.');
                 }
             } catch (error) {
                 console.error('Failed to load user info:', error);
-                currentUser = null;
+                currentUser = { customerUid: 'PREVIEW-001', email: 'preview@test.com', name: '미리보기' };
             }
         }
 
-        // API에서 상품 목록 로드 (구현 필수)
         async function loadProductsFromApi() {
             try {
-                const result = await makeApiRequest('list-products', {
-                });
-
-                // YML 스키마 기반 자동 검증
-                if (!validateApiResponse('list-products', result)) {
-                    // 검증 실패 시 에러 메시지는 validateApiResponse에서 표시됨
-                    return false;
-                }
-
+                const result = await makeApiRequest('list-products', {});
+                if (!validateApiResponse('list-products', result)) return false;
                 if (result && Array.isArray(result)) {
-                    products = result;
-                    showNotification('API에서 상품 로드 성공', 'success');
+                    products = result.map(p => ({
+                        ...p,
+                        images: p.images || p.imageUrls
+                            || (p.thumbnailImage ? [p.thumbnailImage] : [])
+                    }));
                     return true;
-                } else {
-                    showNotification('상품 목록이 배열 형식이 아닙니다', 'error');
-                    return false;
                 }
+                return false;
             } catch (error) {
-                console.error('API 미구현:', error);
-                showNotification('상품 목록 조회 API를 먼저 구현해주세요', 'error');
+                console.error('API 미구현, 더미 데이터 사용:', error);
                 return false;
             }
         }
 
-        // Render products
+        // ── Slideshow Logic ──
+        const slideshowIntervals = {};
+
+        function startSlideshow(cardId, imageCount) {
+            if (imageCount <= 1) return;
+            let current = 0;
+            slideshowIntervals[cardId] = setInterval(() => {
+                current = (current + 1) % imageCount;
+                const slides = document.querySelector(`#${cardId} .slides`);
+                const dots = document.querySelectorAll(`#${cardId} .slide-dot`);
+                if (slides) slides.style.transform = `translateX(-${current * 100}%)`;
+                dots.forEach((d, i) => d.classList.toggle('active', i === current));
+            }, 3000);
+        }
+
+        // ── Pagination ──
+        const PRODUCTS_PER_PAGE = 9;
+        let currentPage = 1;
+
+        // ── Render Products (Paginated) ──
         function renderProducts() {
-            const productList = document.getElementById('product-list');
+            const listEl = document.getElementById('product-list');
+            const loadingEl = document.getElementById('product-loading');
+            const paginationEl = document.getElementById('shop-pagination');
+
+            loadingEl.style.display = 'none';
+            listEl.style.display = 'grid';
 
             if (products.length === 0) {
-                // yml 설정에서 엔드포인트 가져오기
                 const endpoint = window.APP_RUNTIME?.config?.demoApi?.endpoints['list-products'] || '/api/products';
-
-                productList.innerHTML = `
+                listEl.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">상품 데이터 없음</h3>
-                        <p style="color: var(--text-secondary);">
-                            <strong>GET ${endpoint}</strong> API를 구현하면 상품이 표시됩니다.
-                        </p>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                            응답 형식: [{ id, name, price, stock }]
-                        </p>
-                    </div>
-                `;
+                        <p style="color: var(--text-secondary);"><strong>GET ${endpoint}</strong> API를 구현하면 상품이 표시됩니다.</p>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">응답 형식: [{ id, name, price, stock, description, images }]</p>
+                    </div>`;
+                paginationEl.style.display = 'none';
                 return;
             }
 
-            productList.innerHTML = products.map(product => {
-                const stockStatus = product.stock > 0
-                    ? `<span style="color: var(--success);">재고: ${product.stock}개</span>`
-                    : `<span style="color: var(--error);">품절</span>`;
+            // Clear old slideshow intervals
+            Object.values(slideshowIntervals).forEach(clearInterval);
+            Object.keys(slideshowIntervals).forEach(k => delete slideshowIntervals[k]);
+
+            const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+            const pageProducts = products.slice(start, start + PRODUCTS_PER_PAGE);
+
+            listEl.innerHTML = pageProducts.map((product, i) => {
+                const globalIdx = start + i;
+                const cardId = `pcard-${globalIdx}`;
+                const images = product.images || product.imageUrls || [];
+                const outOfStock = product.stock === 0;
+
+                let slideshowHtml;
+                if (images.length > 0) {
+                    const imgsHtml = images.map(url => `<img src="${url}" alt="${product.name}">`).join('');
+                    const dotsHtml = images.length > 1
+                        ? `<div class="slide-dots">${images.map((_, di) => `<div class="slide-dot${di===0?' active':''}"></div>`).join('')}</div>`
+                        : '';
+                    slideshowHtml = `<div class="slides">${imgsHtml}</div>${dotsHtml}`;
+                } else {
+                    slideshowHtml = `<div class="no-image">📦</div>`;
+                }
 
                 return `
-                    <div class="product-card">
-                        <div class="card-header">${product.name}</div>
-                        <div class="price">₩${product.price.toLocaleString()}</div>
-                        <div style="margin: 0.5rem 0; font-size: 0.9rem;">${stockStatus}</div>
-                        <div class="quantity-control">
-                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', -1)"
-                                ${product.stock === 0 ? 'disabled' : ''}>-</button>
-                            <input type="number" class="quantity-input" id="qty-${product.id}"
-                                value="0" min="0" max="${product.stock}" readonly>
-                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', 1)"
-                                ${product.stock === 0 ? 'disabled' : ''}>+</button>
+                    <div class="shop-product-card" id="${cardId}" onclick="openProductModal(${globalIdx})">
+                        ${outOfStock ? '<div class="product-card-badge">SOLD OUT</div>' : ''}
+                        <div class="product-slideshow">${slideshowHtml}</div>
+                        <div class="product-card-info">
+                            <h3>${product.name}</h3>
+                            <div class="product-price">₩${product.price.toLocaleString()}</div>
+                            <div class="product-stock" style="color: ${outOfStock ? 'var(--danger)' : 'var(--success)'};">
+                                ${outOfStock ? '품절' : `재고 ${product.stock}개`}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
-        }
 
-        function updateQuantity(productId, delta) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
+            // Start slideshows for this page
+            pageProducts.forEach((product, i) => {
+                const globalIdx = start + i;
+                const images = product.images || product.imageUrls || [];
+                if (images.length > 1) startSlideshow(`pcard-${globalIdx}`, images.length);
+            });
 
-            const input = document.getElementById(`qty-${productId}`);
-            let qty = parseInt(input.value) + delta;
-
-            // 재고 수량 체크
-            if (qty < 0) qty = 0;
-            if (qty > product.stock) {
-                showNotification(`⚠️ 재고가 ${product.stock}개만 남았습니다`, 'warning');
-                qty = product.stock;
+            // Pagination controls
+            if (totalPages > 1) {
+                paginationEl.style.display = 'block';
+                let html = `<button class="shop-page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀</button>`;
+                for (let p = 1; p <= totalPages; p++) {
+                    html += `<button class="shop-page-btn${p === currentPage ? ' active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+                }
+                html += `<button class="shop-page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>▶</button>`;
+                paginationEl.innerHTML = html;
+            } else {
+                paginationEl.style.display = 'none';
             }
-
-            input.value = qty;
-            cart[productId] = qty;
-            updateCartSummary();
         }
 
-        function updateCartSummary() {
-            const cartItemsDiv = document.getElementById('cart-items');
-            const cartTotalSpan = document.getElementById('cart-total');
-            const finalAmountSpan = document.getElementById('final-amount');
+        function goToPage(page) {
+            const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderProducts();
+            document.getElementById('product-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ── Inline Cart Rendering ──
+        function updateInlineCart() {
+            const itemsEl = document.getElementById('inline-cart-items');
+            const totalEl = document.getElementById('inline-cart-total');
+
+            const cartKeys = Object.keys(cart).filter(k => cart[k] > 0);
+
+            if (cartKeys.length === 0) {
+                itemsEl.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 1rem;">장바구니가 비어있습니다.</div>';
+                totalEl.textContent = '₩0';
+                return;
+            }
 
             let total = 0;
             let html = '';
 
-            Object.keys(cart).forEach(productId => {
+            cartKeys.forEach(productId => {
                 const qty = cart[productId];
-                if (qty > 0) {
-                    const product = products.find(p => p.id === productId);
-                    const subtotal = product.price * qty;
-                    total += subtotal;
-                    html += `
-                        <div class="cart-item">
-                            <span>${product.name} x${qty}</span>
-                            <span>₩${subtotal.toLocaleString()}</span>
+                const product = products.find(p => String(p.id) === String(productId));
+                if (!product) return;
+                const subtotal = product.price * qty;
+                total += subtotal;
+                html += `
+                    <div class="inline-cart-row">
+                        <span class="item-name">${product.name}</span>
+                        <div class="inline-cart-qty-control">
+                            <button class="inline-cart-qty-btn" onclick="inlineCartQty('${productId}', -1)">−</button>
+                            <span class="item-qty">${qty}</span>
+                            <button class="inline-cart-qty-btn" onclick="inlineCartQty('${productId}', 1)">+</button>
                         </div>
-                    `;
-                }
+                        <span class="item-subtotal">₩${subtotal.toLocaleString()}</span>
+                        <button class="inline-cart-remove-btn" onclick="inlineCartRemove('${productId}')" title="삭제">✕</button>
+                    </div>`;
             });
 
-            cartItemsDiv.innerHTML = html || '<p style="color: var(--text-secondary);">Cart is empty</p>';
-            cartTotalSpan.textContent = `₩${total.toLocaleString()}`;
-
+            itemsEl.innerHTML = html;
+            totalEl.textContent = `₩${total.toLocaleString()}`;
         }
 
-        // API 목록 동적 생성
-        async function populateApiList() {
-            const apiListElement = document.getElementById('api-list-shop');
-            if (!apiListElement) return;
+        function inlineCartQty(productId, delta) {
+            const product = products.find(p => String(p.id) === String(productId));
+            if (!product) return;
+            let qty = (cart[productId] || 0) + delta;
+            if (qty <= 0) {
+                delete cart[productId];
+            } else if (qty > product.stock) {
+                qty = product.stock;
+                cart[productId] = qty;
+                showNotification(`⚠️ ${product.stock}개 만큼만 주문할 수 있습니다!`, 'warning');
+            } else {
+                cart[productId] = qty;
+            }
+            saveCartToCookie();
+            updateCartUI();
+        }
 
+        function inlineCartRemove(productId) {
+            delete cart[productId];
+            saveCartToCookie();
+            updateCartUI();
+        }
+
+        // ── Product Modal ──
+        let modalProduct = null;
+        let modalSlideIndex = 0;
+
+        async function openProductModal(idx) {
+            modalProduct = products[idx];
+            modalSlideIndex = 0;
+            const modal = document.getElementById('product-modal');
+            const galleryEl = document.getElementById('modal-gallery');
+            const detailEl = document.getElementById('modal-detail');
+
+            // 상세 API 호출하여 전체 이미지 로드 시도
             try {
-                // config 로드 대기
                 const config = await getConfig();
-                const endpoints = config?.api?.endpoints;
-
-                if (!endpoints) {
-                    apiListElement.innerHTML = '';
-                    return;
-                }
-
-                // shop.html에 필요한 API들
-                const requiredApis = ['list-products', 'create-order'];
-                const apiItems = [];
-
-                requiredApis.forEach(apiKey => {
-                    const apiConfig = endpoints[apiKey];
-                    if (apiConfig && apiConfig.url) {
-                        const method = apiConfig.method || 'GET';
-                        const description = apiConfig.description || '';
-                        apiItems.push(`<li><code>${method} ${apiConfig.url}</code> - ${description}</li>`);
+                const baseUrl = config.api.baseUrl;
+                const token = getToken();
+                const res = await fetch(baseUrl + '/api/products/' + modalProduct.id, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     }
                 });
+                if (res.ok) {
+                    const detail = await res.json();
+                    if (detail.description) modalProduct.description = detail.description;
+                    if (detail.productImages) {
+                        const sorted = Object.entries(detail.productImages)
+                            .sort((a, b) => a[1] - b[1])
+                            .map(e => e[0]);
+                        if (sorted.length > 0) modalProduct.images = sorted;
+                    }
+                }
+            } catch (e) { /* 상세 API 실패 시 기존 데이터 사용 */ }
 
-                // API가 정의되어 있으면 표시, 없으면 빈 문자열
-                apiListElement.innerHTML = apiItems.join('');
-            } catch (error) {
-                console.error('API 목록 로드 실패:', error);
-                apiListElement.innerHTML = '';
+            const images = modalProduct.images || modalProduct.imageUrls || [];
+            // 모달 열 때 수량은 항상 0으로 초기화
+            const currentQty = 0;
+
+            // Gallery
+            if (images.length > 0) {
+                const imgsHtml = images.map(url => `<img src="${url}" alt="${modalProduct.name}">`).join('');
+                const dotsHtml = images.length > 1
+                    ? `<div class="gallery-dots">${images.map((_, i) => `<div class="gallery-dot${i===0?' active':''}" onclick="modalGoTo(${i})"></div>`).join('')}</div>`
+                    : '';
+                const navHtml = images.length > 1
+                    ? `<button class="gallery-nav prev" onclick="modalNav(-1, event)">‹</button><button class="gallery-nav next" onclick="modalNav(1, event)">›</button>`
+                    : '';
+                galleryEl.innerHTML = `<div class="slides">${imgsHtml}</div>${dotsHtml}${navHtml}`;
+            } else {
+                galleryEl.innerHTML = `<div class="no-image">📦</div>`;
+            }
+
+            // Detail
+            const desc = modalProduct.description || '상품 설명이 없습니다.';
+            const outOfStock = modalProduct.stock === 0;
+
+            detailEl.innerHTML = `
+                <h2>${modalProduct.name}</h2>
+                <div class="modal-price">₩${modalProduct.price.toLocaleString()}</div>
+                <div class="modal-desc">${desc}</div>
+                <div class="modal-stock" style="color: ${outOfStock ? 'var(--danger)' : 'var(--success)'};">
+                    ${outOfStock ? '품절' : `재고 ${modalProduct.stock}개`}
+                </div>
+                ${outOfStock ? `<button class="btn btn-primary modal-add-btn" disabled>품절</button>` : `
+                <div class="modal-qty-row">
+                    <label>수량</label>
+                    <div class="modal-qty-control">
+                        <button class="modal-qty-btn" onclick="modalQty(-1)">−</button>
+                        <input type="number" class="modal-qty-input" id="modal-qty" value="${currentQty}" min="0" max="${modalProduct.stock}" oninput="modalQtyInput(this)">
+                        <button class="modal-qty-btn" onclick="modalQty(1)">+</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary modal-add-btn" onclick="addToCartFromModal()">장바구니 담기</button>
+                `}
+            `;
+
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.remove('open');
+            document.body.style.overflow = '';
+            modalProduct = null;
+        }
+
+        // Close modal on overlay click
+        document.getElementById('product-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function modalNav(dir, event) {
+            if (event) event.stopPropagation();
+            const images = modalProduct.images || modalProduct.imageUrls || [];
+            if (images.length <= 1) return;
+            modalSlideIndex = (modalSlideIndex + dir + images.length) % images.length;
+            updateModalSlide();
+        }
+
+        function modalGoTo(idx) {
+            modalSlideIndex = idx;
+            updateModalSlide();
+        }
+
+        function updateModalSlide() {
+            const slides = document.querySelector('#modal-gallery .slides');
+            const dots = document.querySelectorAll('#modal-gallery .gallery-dot');
+            if (slides) slides.style.transform = `translateX(-${modalSlideIndex * 100}%)`;
+            dots.forEach((d, i) => d.classList.toggle('active', i === modalSlideIndex));
+        }
+
+        function modalQty(delta) {
+            const input = document.getElementById('modal-qty');
+            let qty = parseInt(input.value || 0) + delta;
+            if (qty < 0) qty = 0;
+            if (qty > modalProduct.stock) {
+                qty = modalProduct.stock;
+                showNotification(`⚠️ ${modalProduct.stock}개 만큼만 주문할 수 있습니다!`, 'warning');
+            }
+            input.value = qty;
+        }
+
+        function modalQtyInput(el) {
+            let qty = parseInt(el.value);
+            if (isNaN(qty) || qty < 0) {
+                el.value = 0;
+                return;
+            }
+            if (qty > modalProduct.stock) {
+                showNotification(`⚠️ ${modalProduct.stock}개 만큼만 주문할 수 있습니다!`, 'warning');
+                qty = modalProduct.stock;
+                el.value = qty;
             }
         }
 
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            // API 목록 동적 생성 (비동기)
-            populateApiList();
-        });
+        function addToCartFromModal() {
+            const addQty = parseInt(document.getElementById('modal-qty').value);
+            if (addQty <= 0) return;
 
+            const pid = String(modalProduct.id);
+            const existing = cart[pid] || 0;
+            let newQty = existing + addQty;
+            if (newQty > modalProduct.stock) {
+                newQty = modalProduct.stock;
+                showNotification(`⚠️ 재고 한도(${modalProduct.stock}개)로 조정되었습니다`, 'warning');
+            }
+            cart[pid] = newQty;
+            saveCartToCookie();
+            updateCartUI();
+            closeModal();
+        }
+
+        // ── Cart UI ──
+        function updateCartUI() {
+            updateInlineCart();
+            updateDrawerCart();
+        }
+
+        function updateDrawerCart() {
+            const countEl = document.getElementById('cart-count');
+            const bodyEl = document.getElementById('cart-body');
+            const totalEl = document.getElementById('cart-total-price');
+            if (!countEl || !bodyEl) return;
+
+            let totalItems = 0;
+            Object.values(cart).forEach(q => { if (q > 0) totalItems += q; });
+            countEl.textContent = totalItems;
+
+            const cartKeys = Object.keys(cart).filter(k => cart[k] > 0);
+
+            if (cartKeys.length === 0) {
+                bodyEl.innerHTML = '<div class="cart-drawer-empty">장바구니가 비어있습니다.</div>';
+                totalEl.textContent = '₩0';
+                return;
+            }
+
+            let total = 0;
+            let html = '';
+
+            cartKeys.forEach(productId => {
+                const qty = cart[productId];
+                const product = products.find(p => String(p.id) === String(productId));
+                if (!product) return;
+                const images = product.images || product.imageUrls || [];
+                const thumbSrc = images.length > 0 ? images[0] : '';
+                const subtotal = product.price * qty;
+                total += subtotal;
+
+                html += `
+                    <div class="cart-drawer-item">
+                        ${thumbSrc ? `<img src="${thumbSrc}" alt="${product.name}">` : '<div style="width:48px;height:48px;background:var(--bg-tertiary);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">📦</div>'}
+                        <div class="cart-drawer-item-info">
+                            <div class="item-name">${product.name}</div>
+                            <div class="item-price">₩${product.price.toLocaleString()} × ${qty}</div>
+                        </div>
+                        <div class="cart-drawer-item-actions">
+                            <button onclick="drawerCartQty('${productId}',-1)">−</button>
+                            <span>${qty}</span>
+                            <button onclick="drawerCartQty('${productId}',1)">+</button>
+                        </div>
+                        <button class="cart-drawer-item-remove" onclick="drawerCartRemove('${productId}')">✕</button>
+                    </div>`;
+            });
+
+            bodyEl.innerHTML = html;
+            totalEl.textContent = `₩${total.toLocaleString()}`;
+        }
+
+        function drawerCartQty(productId, delta) {
+            const product = products.find(p => String(p.id) === String(productId));
+            if (!product) return;
+            let qty = (cart[productId] || 0) + delta;
+            if (qty <= 0) {
+                delete cart[productId];
+            } else if (qty > product.stock) {
+                qty = product.stock;
+                cart[productId] = qty;
+                showNotification(`⚠️ ${product.stock}개 만큼만 주문할 수 있습니다!`, 'warning');
+            } else {
+                cart[productId] = qty;
+            }
+            saveCartToCookie();
+            updateCartUI();
+        }
+
+        function drawerCartRemove(productId) {
+            delete cart[productId];
+            saveCartToCookie();
+            updateCartUI();
+        }
+
+        function openCart() {
+            document.getElementById('cart-overlay').classList.add('open');
+            document.getElementById('cart-drawer').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCart() {
+            document.getElementById('cart-overlay').classList.remove('open');
+            document.getElementById('cart-drawer').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ── Create Order ──
         async function createOrder() {
-            // 서버로 보낼 아이템 (productId와 quantity만)
             const items = [];
-
             Object.keys(cart).forEach(productId => {
                 const qty = cart[productId];
                 if (qty > 0) {
-                    items.push({
-                        productId: productId,
-                        quantity: qty
-                    });
+                    items.push({ productId: productId, quantity: qty });
                 }
             });
 
             if (items.length === 0) {
-                showNotification('⚠️ Cart is empty', 'warning');
+                showNotification('장바구니가 비어있습니다.', 'warning');
                 return;
             }
-
-            if (!currentUser) {
-                showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
-                return;
-            }
-
-            // 서버로 전송 (productId, quantity만)
-            // 가격 계산과 재고 확인은 서버에서 처리
-            const orderData = {
-                items: items
-            };
 
             try {
-                const result = await makeApiRequest('create-order', {
-                    body: orderData
-                });
-
-                // YML 스키마 기반 자동 검증
+                const result = await makeApiRequest('create-order', { body: { items } });
                 if (!validateApiResponse('create-order', result)) {
                     throw new Error('API 응답 형식이 올바르지 않습니다.');
                 }
 
                 if (result.orderId) {
+                    // 주문 성공 시 장바구니 비우기
+                    cart = {};
+                    saveCartToCookie();
+                    updateCartUI();
+                    closeCart();
                     showNotification('주문 생성 완료!', 'success');
                     setTimeout(() => {
                         window.location.href = `/pages/orders.html?orderId=${result.orderId}`;
@@ -329,15 +1200,33 @@
             }
         }
 
-        // Initialize
-        async function initShop() {
-            await loadCurrentUser();
-            await loadProductsFromApi();
-            renderProducts();
-            updateCartSummary();
+        // ── API List ──
+        async function populateApiList() {
+            const apiListElement = document.getElementById('api-list-shop');
+            if (!apiListElement) return;
+            try {
+                const config = await getConfig();
+                const endpoints = config?.api?.endpoints;
+                if (!endpoints) { apiListElement.innerHTML = ''; return; }
+                const requiredApis = ['list-products', 'create-order'];
+                const apiItems = [];
+                requiredApis.forEach(apiKey => {
+                    const apiConfig = endpoints[apiKey];
+                    if (apiConfig && apiConfig.url) {
+                        const method = apiConfig.method || 'GET';
+                        apiItems.push(`<li><code>${method} ${apiConfig.url}</code></li>`);
+                    }
+                });
+                apiListElement.innerHTML = apiItems.join('');
+            } catch (error) {
+                apiListElement.innerHTML = '';
+            }
         }
 
+        document.addEventListener('DOMContentLoaded', () => { populateApiList(); });
         initShop();
     </script>
+        <script src="/js/stickers.js"></script>
+    <script src="/js/bling.js"></script>
 </body>
 </html>

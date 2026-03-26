@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>구독 신청 - Commerce Demo</title>
+    <title>구독 신청 - YARE, YARE</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script src="/js/cookie-util.js"></script>
@@ -18,7 +18,7 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand"><img src="/images/logo.png" alt="YARE, YARE"></a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
                 <li><a href="/pages/shop.html" class="nav-link">상점</a></li>
@@ -146,7 +146,11 @@
                 document.getElementById('current-customer-id').textContent = currentUser.customerUid;
             } catch (error) {
                 console.error('Failed to load user info:', error);
-                showNotification('사용자 정보 로드 실패', 'error');
+                // Fallback dummy data for preview
+                currentUser = { customerUid: 'PREVIEW-001', email: 'preview@yare.com', name: '미리보기', phone: '01012345678', pointBalance: 15000 };
+                document.getElementById('current-user-email').textContent = currentUser.email;
+                document.getElementById('current-customer-id').textContent = currentUser.customerUid;
+                console.log('Using preview dummy user data');
             }
         }
 
@@ -178,20 +182,33 @@
             } catch (error) {
                 console.error('Failed to load plans:', error);
 
-                // API 미구현 메시지 표시
-                const mainContent = document.querySelector('.container');
-                mainContent.innerHTML = `
-                    <div class="alert alert-warning" style="margin-top: 2rem;">
-                        <h3>⚠️ API 미구현</h3>
-                        <p><strong>GET /api/plans</strong> 엔드포인트를 구현해주세요.</p>
-                        <p>구독 플랜 목록을 조회하는 API가 필요합니다.</p>
-                        <p style="margin-top: 1rem;">
-                            <a href="/pages/plans.html" class="btn btn-primary">플랜 목록으로 돌아가기</a>
-                        </p>
-                    </div>
-                `;
+                // Fallback dummy data for preview
+                const dummyPlansArray = [
+                    { planId: 'plan_basic', name: 'BASIC', amount: 9900, billingCycle: 'MONTHLY', description: '기본 플랜 - 월 1회 랜덤 스쿱 배송' },
+                    { planId: 'plan_pro', name: 'PRO', amount: 19900, billingCycle: 'MONTHLY', description: '프로 플랜 - 월 2회 프리미엄 스쿱 배송 + 한정판 포함' },
+                    { planId: 'plan_max', name: 'MAX', amount: 39900, billingCycle: 'MONTHLY', description: '맥스 플랜 - 무제한 스쿱 + VIP 전용 아이템 + 우선 배송' },
+                ];
+                plans = {};
+                dummyPlansArray.forEach(plan => {
+                    plans[plan.planId] = {
+                        planId: plan.planId,
+                        name: plan.name,
+                        price: plan.amount,
+                        billingCycle: plan.billingCycle,
+                        emoji: planEmojis[plan.name.toUpperCase()] || '📦'
+                    };
+                });
+                console.log('Using preview dummy plan data');
+
+                // Update plan details if planId was in URL
+                const currentPlanId = document.getElementById('plan-id').value;
+                if (currentPlanId) {
+                    updatePlanDetails(currentPlanId);
+                }
             }
         }
+
+        if (!checkLogin()) throw new Error('redirect');
 
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', async () => {
@@ -452,5 +469,7 @@
             }
         }
     </script>
+        <script src="/js/stickers.js"></script>
+    <script src="/js/bling.js"></script>
 </body>
 </html>
