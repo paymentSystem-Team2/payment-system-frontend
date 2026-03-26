@@ -946,9 +946,10 @@
                     const detail = await res.json();
                     if (detail.description) modalProduct.description = detail.description;
                     if (detail.productImages) {
-                        const sorted = Object.entries(detail.productImages)
-                            .sort((a, b) => a[1] - b[1])
-                            .map(e => e[0]);
+                        const sorted = detail.productImages
+                            .flatMap(map => Object.entries(map))   // [{url: sortOrder}, ...] 펼치기
+                            .sort((a, b) => a[1] - b[1])           // sortOrder 기준 정렬
+                            .map(e => e[0]);                        // url만 추출
                         if (sorted.length > 0) modalProduct.images = sorted;
                     }
                 }

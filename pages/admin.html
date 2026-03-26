@@ -502,7 +502,7 @@
         uploadFiles.forEach((file, i) => {
             formData.append(`uploadProductImages[${i}].file`, file);
             formData.append(`uploadProductImages[${i}].order`, i + 1);
-            formData.append(`uploadProductImages[${i}].isThumbnail`, i === 0);
+            formData.append(`uploadProductImages[${i}].isThumbnail`, i === 0 ? 'true' : 'false');
         });
 
         try {
