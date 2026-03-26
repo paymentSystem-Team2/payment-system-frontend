@@ -440,39 +440,99 @@
                 // 모달 닫기
                 closePointsModal();
 
-                // 1단계: 결제 생성 및 PortOne SDK 호출 (openPortOnePayment 사용)
+                // 1단계: 결제 생성 / 전액 포인트면 내부결제, 아니면 PortOne 결제
                 const finalAmount = Math.max(0, orderToProcess.totalAmount - points);
                 step1 = addPaymentStep(`결제 시작... (포인트: ${points.toLocaleString()}P, 최종 금액: ${finalAmount.toLocaleString()}원)`, 'loading');
 
-                const paymentData = {
-                    orderId: orderToProcess.orderId,
-                    orderName: `주문 ${orderToProcess.orderNumber}`,
-                    totalAmount: orderToProcess.totalAmount,
-                    pointsToUse: points,  // 포인트 정보 추가
-                    currency: orderToProcess.currency,
-                    payMethod: 'CARD',
-                    customer: {
-                        customerId: currentUser.customerUid,
-                        fullName: currentUser.name,
-                        phoneNumber: currentUser.phone || '01012345678',  // KG 이니시스 필수
-                        email: currentUser.email
+                let paymentId = null;
+
+                if (finalAmount === 0) {
+                    // 전액 포인트 결제: PortOne 호출 없이 서버에 결제 생성 후 바로 확정
+                    const createPaymentResult = await makeApiRequest('create-payment', {
+                        body: {
+                            orderId: orderToProcess.orderId,
+                            totalAmount: orderToProcess.totalAmount,
+                            pointsToUse: points
+                        }
+                    });
+
+                    if (!validateApiResponse('create-payment', createPaymentResult)) {
+                        updatePaymentStep(step1, 'error', '결제 생성 응답 형식 오류');
+                        return;
                     }
-                };
 
-                // openPortOnePaymentWithPoints 함수 사용 (portone-sdk.js - 포인트 전용)
-                const paymentResult = await openPortOnePaymentWithPoints(paymentData);
+                    if (!createPaymentResult.success || !createPaymentResult.paymentId) {
+                        updatePaymentStep(step1, 'error', '전액 포인트 결제 생성 실패');
+                        return;
+                    }
 
-                if (!paymentResult || !paymentResult.paymentId) {
-                    updatePaymentStep(step1, 'error', '결제 실패');
-                    return;
+                    paymentId = createPaymentResult.paymentId;
+                    updatePaymentStep(step1, 'success', `전액 포인트 결제 생성 완료 (ID: ${paymentId})`);
+                } else {
+                    const paymentData = {
+                        orderId: orderToProcess.orderId,
+                        orderName: `주문 ${orderToProcess.orderNumber}`,
+                        totalAmount: orderToProcess.totalAmount,
+                        pointsToUse: points,
+                        currency: orderToProcess.currency,
+                        payMethod: 'CARD',
+                        customer: {
+                            customerId: currentUser.customerUid,
+                            fullName: currentUser.name,
+                            phoneNumber: currentUser.phone || '01012345678',
+                            email: currentUser.email
+                        }
+                    };
+
+                    const paymentResult = await openPortOnePaymentWithPoints(paymentData);
+
+                    if (!paymentResult || !paymentResult.paymentId) {
+                        updatePaymentStep(step1, 'error', '결제 실패');
+                        return;
+                    }
+
+                    paymentId = paymentResult.paymentId;
+                    updatePaymentStep(step1, 'success', `결제 완료 (ID: ${paymentId})`);
                 }
 
-                updatePaymentStep(step1, 'success', `결제 완료 (ID: ${paymentResult.paymentId})`);
-
-                // 2단계: 결제 확정 API 호출 (자동)
+                // 2단계: 결제 확정 API 호출
                 step2 = addPaymentStep('결제 확정 중...', 'loading');
 
-                await confirmPaymentTemplate(paymentResult.paymentId);
+                await confirmPaymentTemplate(paymentId);
+
+                // // 1단계: 결제 생성 및 PortOne SDK 호출 (openPortOnePayment 사용)
+                // const finalAmount = Math.max(0, orderToProcess.totalAmount - points);
+                // step1 = addPaymentStep(`결제 시작... (포인트: ${points.toLocaleString()}P, 최종 금액: ${finalAmount.toLocaleString()}원)`, 'loading');
+                //
+                // const paymentData = {
+                //     orderId: orderToProcess.orderId,
+                //     orderName: `주문 ${orderToProcess.orderNumber}`,
+                //     totalAmount: orderToProcess.totalAmount,
+                //     pointsToUse: points,  // 포인트 정보 추가
+                //     currency: orderToProcess.currency,
+                //     payMethod: 'CARD',
+                //     customer: {
+                //         customerId: currentUser.customerUid,
+                //         fullName: currentUser.name,
+                //         phoneNumber: currentUser.phone || '01012345678',  // KG 이니시스 필수
+                //         email: currentUser.email
+                //     }
+                // };
+                //
+                // // openPortOnePaymentWithPoints 함수 사용 (portone-sdk.js - 포인트 전용)
+                // const paymentResult = await openPortOnePaymentWithPoints(paymentData);
+                //
+                // if (!paymentResult || !paymentResult.paymentId) {
+                //     updatePaymentStep(step1, 'error', '결제 실패');
+                //     return;
+                // }
+                //
+                // updatePaymentStep(step1, 'success', `결제 완료 (ID: ${paymentResult.paymentId})`);
+                //
+                // // 2단계: 결제 확정 API 호출 (자동)
+                // step2 = addPaymentStep('결제 확정 중...', 'loading');
+                //
+                // await confirmPaymentTemplate(paymentResult.paymentId);
 
                 updatePaymentStep(step2, 'success', '결제 확정 완료');
                 showNotification('결제가 완료되었습니다! (포인트: ' + points.toLocaleString() + 'P 사용)', 'success');
